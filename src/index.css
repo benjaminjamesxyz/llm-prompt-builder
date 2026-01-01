@@ -1,0 +1,202 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg: #1e1e2e;
+  --surface: #313244;
+  --surface2: #45475a;
+  --text: #cdd6f4;
+  --text-muted: #a6adc8;
+  --primary: #89b4fa;
+  --primary-hover: #b4befe;
+  --border: #585b70;
+  --success: #a6e3a1;
+  --accent: #f38ba8;
+}
+
+.theme-dracula {
+  --bg: #282a36;
+  --surface: #44475a;
+  --surface2: #6272a4;
+  --text: #f8f8f2;
+  --text-muted: #bd93f9;
+  --primary: #50fa7b;
+  --primary-hover: #8be9fd;
+  --border: #6272a4;
+  --success: #50fa7b;
+  --accent: #ff5555;
+}
+
+.theme-gruvbox {
+  --bg: #282828;
+  --surface: #3c3836;
+  --surface2: #504945;
+  --text: #ebdbb2;
+  --text-muted: #a89984;
+  --primary: #fabd2f;
+  --primary-hover: #fe8019;
+  --border: #665c54;
+  --success: #b8bb26;
+  --accent: #fb4934;
+}
+
+.theme-tokyo {
+  --bg: #1a1b26;
+  --surface: #24283b;
+  --surface2: #414868;
+  --text: #c0caf5;
+  --text-muted: #565f89;
+  --primary: #7aa2f7;
+  --primary-hover: #bb9af7;
+  --border: #414868;
+  --success: #9ece6a;
+  --accent: #f7768e;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--text);
+  transition: background-color 0.3s, color 0.3s;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--surface2);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--primary);
+}
+
+.editor-font {
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+}
+
+.node-enter {
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.modal-enter {
+  animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes popIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Dynamic Prism Syntax Highlighting */
+code[class*="language-"],
+pre[class*="language-"] {
+  color: var(--text);
+  text-shadow: none;
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-size: 0.875rem;
+  direction: ltr;
+  text-align: left;
+  white-space: pre;
+  word-spacing: normal;
+  word-break: normal;
+  line-height: 1.5;
+  tab-size: 4;
+  hyphens: none;
+  background: transparent;
+}
+
+pre[class*="language-"] {
+  margin: 0;
+  padding: 0;
+}
+
+/* Map Prism tokens to CSS Variables */
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata,
+.token.punctuation {
+  color: var(--text-muted);
+}
+
+.token.namespace {
+  opacity: .7;
+}
+
+.token.property,
+.token.tag,
+.token.boolean,
+.token.number,
+.token.constant,
+.token.symbol,
+.token.deleted {
+  color: var(--accent);
+}
+
+.token.selector,
+.token.attr-name,
+.token.string,
+.token.char,
+.token.builtin,
+.token.inserted {
+  color: var(--success);
+}
+
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string {
+  color: var(--text);
+}
+
+.token.atrule,
+.token.attr-value,
+.token.keyword,
+.token.function,
+.token.class-name {
+  color: var(--primary);
+}
+
+.token.regex,
+.token.important,
+.token.variable {
+  color: var(--accent);
+}
+
+.token.important,
+.token.bold {
+  font-weight: bold;
+}
+
+.token.italic {
+  font-style: italic;
+}
