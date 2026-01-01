@@ -45,19 +45,18 @@ src/
 
 ### Prerequisites
 
-- [bun](https://bun.sh/) - JavaScript runtime
-- [pnpm](https://pnpm.io/) - Package manager
+- [bun](https://bun.sh/) - JavaScript runtime and package manager
 
 ### Installation
 
 ```bash
-pnpm install
+bun install
 ```
 
 ### Development Server
 
 ```bash
-pnpm dev
+bun run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) to view the application.
@@ -65,7 +64,7 @@ Open [http://localhost:3000](http://localhost:3000) to view the application.
 ### Build
 
 ```bash
-pnpm build
+bun run build
 ```
 
 The build output will be in the `dist/` directory.
@@ -73,40 +72,169 @@ The build output will be in the `dist/` directory.
 ### Preview Production Build
 
 ```bash
-pnpm preview
+bun run preview
 ```
 
-## Deployment to Cloudflare Pages
+## Deployment
 
-This project is optimized for Cloudflare Pages deployment.
+This project uses automated CI/CD with GitHub Actions to deploy to Cloudflare Pages.
 
-### Option 1: Direct Upload
+### Branch Strategy
 
-1. Build the project: `pnpm build`
-2. Upload the contents of `dist/` to Cloudflare Pages
+- **master** → Production (`prompt-builder.benjaminjames.xyz`)
+- **staging** → Staging (`staging.prompt-builder.benjaminjames.xyz`)
+- Pull requests to master → Run tests only
 
-### Option 2: Git Integration
+### Local Deployment (Wrangler)
 
-Cloudflare Pages automatically deploys from Git. The build configuration:
-
-- **Build Command**: `pnpm build`
-- **Build Output Directory**: `dist`
-- **Node.js Version**: Latest
-
-### Option 3: Wrangler
+Deploy directly from your local machine:
 
 ```bash
-bun install
-pnpm build
-bunx wrangler pages deploy dist
+# Deploy to production
+bun run deploy:prod
+
+# Deploy to staging
+bun run deploy:staging
 ```
+
+### GitHub Actions CI/CD
+
+Automated deployment is configured in `.github/workflows/deploy.yml`:
+
+**Triggers:**
+- Push to `master` or `staging` branches
+- Pull requests to `master`
+
+**Pipeline Steps:**
+1. Checkout code
+2. Setup Bun runtime
+3. Install dependencies
+4. TypeScript typecheck (blocking)
+5. Run Vitest tests (blocking)
+6. Build project
+7. Deploy to Cloudflare Pages via Wrangler
+
+**Required GitHub Secrets:**
+- `CLOUDFLARE_ACCOUNT_ID` - Found in Cloudflare Dashboard → Workers & Pages
+- `CLOUDFLARE_API_TOKEN` - Create in Cloudflare → My Profile → API Tokens
+  - Permissions: Account > Pages > Edit
+  - Account Resources: Include > Your Account
+
+### Setting Up GitHub Secrets
+
+1. Get your Cloudflare Account ID:
+   - Go to [Cloudflare Dashboard](https://dash.cloudflare.com)
+   - Select your account
+   - Navigate to Workers & Pages
+   - Account ID is in the right sidebar
+
+2. Create API Token:
+   - Go to [My Profile → API Tokens](https://dash.cloudflare.com/profile/api-tokens)
+   - Click "Create Token"
+   - Use "Edit Cloudflare Workers" template
+   - Ensure Account > Pages > Edit permission
+   - Include your account in Account Resources
+
+3. Add secrets to GitHub:
+   - Go to repository Settings → Secrets and variables → Actions
+   - Click "New repository secret"
+   - Add `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_API_TOKEN`
+
+### DNS Configuration
+
+Add these DNS records to your Cloudflare-managed domain:
+
+```
+Type: CNAME
+Name: prompt-builder
+Content: llm-prompt-builder.pages.dev
+TTL: Auto
+Proxy: Proxied (Orange cloud)
+
+Type: CNAME
+Name: staging
+Content: llm-prompt-builder.pages.dev
+TTL: Auto
+Proxy: Proxied (Orange cloud)
+```
+
+### Manual Deployment Workflow
+
+**Production Deployment:**
+```bash
+# Ensure you're on master branch
+git checkout master
+git pull origin master
+
+# Make changes
+git add .
+git commit -m "your message"
+git push origin master
+
+# GitHub Actions automatically deploys
+```
+
+**Staging Deployment:**
+```bash
+# Create/update staging branch
+git checkout staging
+git pull origin staging
+
+# Make changes
+git add .
+git commit -m "your message"
+git push origin staging
+
+# GitHub Actions automatically deploys
+```
+
+**Testing with Pull Requests:**
+```bash
+# Create feature branch
+git checkout -b feature/your-feature
+
+# Make changes and push
+git add .
+git commit -m "your message"
+git push origin feature/your-feature
+
+# Create PR to master
+# Tests run automatically but no deployment
+# Merge triggers production deployment
+```
+
+### Branch Protection Rules
+
+In GitHub repository settings for `master` branch:
+- Require status checks to pass before merging:
+  - ✅ `test` (typecheck + tests)
+  - ✅ `deploy-production`
+- Require branches to be up-to-date before merging
+- Optionally require pull request reviews
+
+### Testing
+
+Run tests locally before pushing:
+
+```bash
+# Run all tests in watch mode
+bun run test
+
+# Run tests once (CI mode)
+bun run test:ci
+
+# Run tests with coverage report
+bun run test:coverage
+```
+
+All tests must pass before deployment.
 
 ## Tech Stack
 
 - **Framework**: Preact 10.x
 - **Build Tool**: Vite 5.x
 - **CSS**: Tailwind CSS 3.x
-- **Package Manager**: pnpm
+- **Package Manager**: bun
 - **Runtime**: bun
 - **Syntax Highlighting**: PrismJS
 - **YAML**: js-yaml
