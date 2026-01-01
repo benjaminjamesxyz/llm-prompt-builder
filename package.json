@@ -12,8 +12,8 @@
     "test": "vitest",
     "test:ci": "vitest run",
     "test:coverage": "vitest run --coverage",
-    "deploy:prod": "bun run build && bunx wrangler pages deploy dist --project-name=llm-prompt-builder --branch=production",
-    "deploy:staging": "bun run build && bunx wrangler pages deploy dist --project-name=llm-prompt-builder --branch=staging"
+    "deploy:prod": "bun run build && bunx wrangler pages deploy dist --project-name=llm-prompt-builder",
+    "deploy:staging": "bun run build && bunx wrangler pages deploy dist --project-name=llm-prompt-builder"
   },
   "dependencies": {
     "dompurify": "^3.3.1",
