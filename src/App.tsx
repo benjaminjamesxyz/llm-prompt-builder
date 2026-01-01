@@ -9,6 +9,7 @@ import { toXML, toObjectTree, toTOON, toMarkdown } from './utils/formatters';
 import { saveToLocalStorage } from './utils/storage';
 import { highlightCode } from './utils/prism';
 import { uuid } from './utils/uuid';
+import yaml from 'js-yaml';
 
 export const App = () => {
   const [nodes, setNodes] = useState<Node[]>(() => {
@@ -260,7 +261,7 @@ export const App = () => {
         <div className="flex-1 flex flex-col border-r border-border min-w-[300px] relative">
           <div className="p-4 border-b border-border bg-bg sticky top-0 z-10 flex justify-between items-center">
             <h2 className="font-semibold text-textMuted uppercase text-xs tracking-wider">Builder</h2>
-            <Button onClick={(e: Event) => { e.stopPropagation(); setIsBlockMenuOpen(!isBlockMenuOpen); }} className="relative">
+            <Button onClick={() => setIsBlockMenuOpen(!isBlockMenuOpen)} className="relative">
               <Plus /> Add Block
             </Button>
           </div>

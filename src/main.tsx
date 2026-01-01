@@ -2,13 +2,11 @@ import './index.css';
 import { render } from 'preact';
 import { App } from './App';
 
-console.log('Starting LLM Prompt Builder...');
-
-// Render the app
 const root = document.getElementById('app');
 if (root) {
   render(<App />, root);
-  console.log('App rendered successfully');
+  document.body.style.background = '';
+  document.body.style.color = '';
 } else {
   console.error('Root element #app not found');
 }
