@@ -25,9 +25,11 @@ export const validateFileSize = (file: File): { valid: boolean; error?: Validati
 export const safeJsonParse = <T>(json: string): { data: T | null; error?: ValidationError } => {
   try {
     const parsed = JSON.parse(json);
-    // Basic prototype pollution protection
-    if (parsed.__proto__ || parsed.constructor !== Object) {
-      return { data: null, error: ValidationError.INVALID_SCHEMA };
+    // Basic prototype pollution protection - check for __proto__ in plain objects
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+      if (Object.prototype.hasOwnProperty.call(parsed, '__proto__')) {
+        return { data: null, error: ValidationError.INVALID_SCHEMA };
+      }
     }
     return { data: parsed };
   } catch (err) {
