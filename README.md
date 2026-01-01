@@ -123,10 +123,11 @@ bunx wrangler pages deploy dist
 ## Browser Support
 
 Modern browsers with ES2020+ support:
+
 - Chrome/Edge 90+
 - Firefox 88+
 - Safari 14+
 
 ## License
 
-MIT
+GPL-3.0
