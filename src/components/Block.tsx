@@ -3,6 +3,7 @@ import { Button } from './Button';
 import { Plus, ChevronUp, ChevronDown, Trash, List, Type } from './Icons';
 import { SimpleItem } from './SimpleItem';
 import { uuid } from '../utils/uuid';
+import { sanitizeTagInput } from '../utils/validation';
 
 interface BlockProps {
   node: Node;
@@ -22,7 +23,8 @@ export const Block = ({ node, index, updateNode, deleteNode, moveNode, addChild,
 
   const handleTagChange = (e: Event) => {
     const target = e.target as HTMLInputElement;
-    updateNode(node.id, { tag: target.value.replace(/\s/g, '_') });
+    const sanitizedTag = sanitizeTagInput(target.value);
+    updateNode(node.id, { tag: sanitizedTag });
   };
 
   const toggleListMode = () => {
@@ -64,12 +66,15 @@ export const Block = ({ node, index, updateNode, deleteNode, moveNode, addChild,
             type="text" 
             value={node.tag} 
             onInput={handleTagChange} 
-            placeholder="TAG_NAME" 
+            placeholder="TAG_NAME"
+            aria-label={`Block tag name: ${node.tag}`}
+            id={`tag-${node.id}`}
             className="bg-bg border border-border rounded px-2 py-1 text-primary font-bold font-mono text-sm w-1/3 focus:outline-none focus:border-primary placeholder-surface2" 
           />
           <div className="ml-auto flex gap-1 items-center">
             <button 
-              onClick={toggleListMode} 
+              onClick={toggleListMode}
+              aria-label={node.isList ? "Switch to text mode" : "Switch to list mode"}
               className="p-1.5 rounded hover:bg-surface2 text-textMuted hover:text-text transition-colors" 
               title={node.isList ? "Switch to Text Mode" : "Switch to List Mode"}
             >
@@ -77,10 +82,10 @@ export const Block = ({ node, index, updateNode, deleteNode, moveNode, addChild,
             </button>
             <div className="w-px h-4 bg-border mx-1"></div>
             <div className="flex gap-1">
-              <Button variant="ghost" onClick={() => moveNode(index, -1)} title="Move Up"><ChevronUp /></Button>
-              <Button variant="ghost" onClick={() => moveNode(index, 1)} title="Move Down"><ChevronDown /></Button>
-              {!node.isList && <Button variant="ghost" onClick={() => addChild(node.id)} title="Add Nested Block"><Plus /></Button>}
-              <Button variant="danger" onClick={() => deleteNode(node.id)} title="Delete Block"><Trash /></Button>
+              <Button variant="ghost" onClick={() => moveNode(index, -1)} aria-label="Move block up" title="Move Up"><ChevronUp /></Button>
+              <Button variant="ghost" onClick={() => moveNode(index, 1)} aria-label="Move block down" title="Move Down"><ChevronDown /></Button>
+              {!node.isList && <Button variant="ghost" onClick={() => addChild(node.id)} aria-label="Add nested block" title="Add Nested Block"><Plus /></Button>}
+              <Button variant="danger" onClick={() => deleteNode(node.id)} aria-label="Delete block" title="Delete Block"><Trash /></Button>
             </div>
           </div>
         </div>
@@ -99,7 +104,8 @@ export const Block = ({ node, index, updateNode, deleteNode, moveNode, addChild,
               />
             ))}
             <button 
-              onClick={addListItem} 
+              onClick={addListItem}
+              aria-label="Add list item"
               className="text-xs flex items-center gap-1 text-primary hover:text-primaryHover mt-2"
             >
               <Plus /> Add Item
@@ -108,8 +114,10 @@ export const Block = ({ node, index, updateNode, deleteNode, moveNode, addChild,
         ) : (
           <textarea 
             value={node.content} 
-            onInput={handleContentChange} 
-            placeholder="Enter prompt content here..." 
+            onInput={handleContentChange}
+            placeholder="Enter prompt content here..."
+            aria-label={`Block content for ${node.tag}`}
+            id={`content-${node.id}`}
             className="w-full bg-bg border border-border rounded px-3 py-2 text-sm text-text editor-font focus:outline-none focus:border-primary resize-y min-h-[60px]"
           ></textarea>
         )}

@@ -1,4 +1,12 @@
 import Prism from 'prismjs';
+import DOMPurify from 'dompurify';
+
+// Configure DOMPurify to preserve syntax highlighting
+const purifyConfig = {
+  ALLOWED_TAGS: ['span', 'br', 'code', 'pre'],
+  ALLOWED_ATTR: ['class'],
+  KEEP_CONTENT: true
+};
 
 export const highlightCode = (code: string, format: string): string => {
   if (typeof Prism === 'undefined') return code;
@@ -9,5 +17,8 @@ export const highlightCode = (code: string, format: string): string => {
   if (format === 'toon') lang = 'yaml';
   
   const grammar = Prism.languages[lang] || Prism.languages.plain;
-  return Prism.highlight(code, grammar, lang);
+  const highlighted = Prism.highlight(code, grammar, lang);
+  
+  // Sanitize with DOMPurify for defense-in-depth
+  return DOMPurify.sanitize(highlighted, purifyConfig);
 };

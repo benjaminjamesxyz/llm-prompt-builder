@@ -9,16 +9,20 @@ import { toXML, toObjectTree, toTOON, toMarkdown } from './utils/formatters';
 import { saveToLocalStorage } from './utils/storage';
 import { highlightCode } from './utils/prism';
 import { uuid } from './utils/uuid';
+import { loadNodesFromLocalStorage } from './utils/storage';
+import { validateFileSize, safeJsonParse, validateNodes, ValidationError } from './utils/validation';
+import { showToast } from './components/Toast';
 import yaml from 'js-yaml';
+
+const ERROR_MESSAGES = {
+  [ValidationError.FILE_TOO_LARGE]: 'File exceeds 500KB limit (ERR_FILE_SIZE)',
+  [ValidationError.INVALID_JSON]: 'Invalid JSON format (ERR_INVALID_JSON)',
+  [ValidationError.INVALID_SCHEMA]: 'Invalid session file structure (ERR_INVALID_SCHEMA)',
+};
 
 export const App = () => {
   const [nodes, setNodes] = useState<Node[]>(() => {
-    try {
-      const saved = localStorage.getItem('prompt_builder_autosave');
-      return saved ? JSON.parse(saved) : MODEL_EXAMPLES['generic'][0].nodes;
-    } catch {
-      return MODEL_EXAMPLES['generic'][0].nodes;
-    }
+    return loadNodesFromLocalStorage() || MODEL_EXAMPLES['generic'][0].nodes;
   });
   const [format, setFormat] = useState<Format>('xml');
   const [theme, setTheme] = useState('');
@@ -151,7 +155,7 @@ export const App = () => {
       setTimeout(() => setCopyFeedback(false), 2000);
     } catch (err) {
       console.error('Copy failed', err);
-      alert("Failed to copy to clipboard.");
+      showToast('Failed to copy to clipboard. Try again.', 'error');
     } finally {
       document.body.removeChild(textarea);
     }
@@ -179,14 +183,45 @@ export const App = () => {
     const target = e.target as HTMLInputElement;
     const file = target.files?.[0];
     if (!file) return;
+    
+    const sizeCheck = validateFileSize(file);
+    if (!sizeCheck.valid) {
+      showToast(ERROR_MESSAGES[ValidationError.FILE_TOO_LARGE], 'error');
+      target.value = '';
+      return;
+    }
+    
     const reader = new FileReader();
     reader.onload = (e: ProgressEvent<FileReader>) => {
-      try {
-        setNodes(JSON.parse(e.target?.result as string));
-      } catch (err) {
-        alert("Invalid session file.");
+      const content = e.target?.result as string;
+      
+      const parseResult = safeJsonParse(content);
+      if (!parseResult.data) {
+        showToast(ERROR_MESSAGES[ValidationError.INVALID_JSON], 'error');
+        return;
       }
+      
+      const data = parseResult.data;
+      if (!Array.isArray(data)) {
+        showToast(ERROR_MESSAGES[ValidationError.INVALID_SCHEMA], 'error');
+        return;
+      }
+      
+      const validation = validateNodes(data);
+      if (!validation.valid) {
+        showToast(ERROR_MESSAGES[ValidationError.INVALID_SCHEMA], 'error');
+        return;
+      }
+      
+      setNodes(validation.nodes!);
+      showToast('Session loaded successfully', 'success');
+      target.value = '';
     };
+    
+    reader.onerror = () => {
+      showToast('Failed to read file (ERR_READ_FAILED)', 'error');
+    };
+    
     reader.readAsText(file);
   };
 
@@ -196,7 +231,7 @@ export const App = () => {
 
   return (
     <div className="h-screen flex flex-col overflow-hidden">
-      <header className="h-14 border-b border-border bg-surface flex items-center px-4 justify-between shrink-0 gap-4 overflow-x-auto">
+      <header role="banner" className="h-14 border-b border-border bg-surface flex items-center px-4 justify-between shrink-0 gap-4 overflow-x-auto">
         <div className="flex items-center gap-2 mr-auto shrink-0">
           <Code className="text-primary" />
           <h1 className="font-bold text-lg tracking-tight hidden md:block">
@@ -204,10 +239,12 @@ export const App = () => {
           </h1>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <label className="text-xs text-textMuted font-bold uppercase hidden sm:block">Model:</label>
+          <label htmlFor="model-select" className="text-xs text-textMuted font-bold uppercase hidden sm:block">Model:</label>
           <select 
+            id="model-select"
             value={selectedModel} 
-            onChange={handleModelChange} 
+            onChange={handleModelChange}
+            aria-label="Select AI model"
             className="bg-bg border border-border text-xs rounded px-2 py-1 focus:outline-none w-32 md:w-40"
           >
             {Object.entries(MODELS).map(([key, val]) => (
@@ -217,12 +254,14 @@ export const App = () => {
         </div>
         <div className="h-4 w-px bg-border hidden sm:block shrink-0"></div>
         <div className="flex items-center gap-2 shrink-0">
-          <label className="text-xs text-textMuted font-bold uppercase hidden sm:block">
+          <label htmlFor="template-select" className="text-xs text-textMuted font-bold uppercase hidden sm:block">
             {selectedModel === 'generic' ? 'Template:' : 'Example:'}
           </label>
           <select 
+            id="template-select"
             key={selectedModel} 
-            onChange={(e) => loadExample((e.target as HTMLSelectElement).value)} 
+            onChange={(e) => loadExample((e.target as HTMLSelectElement).value)}
+            aria-label={`Select ${selectedModel === 'generic' ? 'template' : 'example'}`}
             className="bg-bg border border-border text-xs rounded px-2 py-1 focus:outline-none w-32 md:w-40"
           >
             <option value="" disabled selected>Select...</option>
@@ -235,20 +274,36 @@ export const App = () => {
         <div className="flex items-center gap-2 shrink-0">
           <Button 
             variant="secondary" 
-            onClick={() => document.getElementById('loadInput')?.click()} 
+            onClick={() => document.getElementById('loadInput')?.click()}
+            aria-label="Load session file"
             title="Load Session" 
             className="hidden sm:flex"
           >
             <Upload />
           </Button>
-          <input type="file" id="loadInput" className="hidden" accept=".json" onChange={loadSession} />
-          <Button variant="secondary" onClick={saveSession} title="Save Session" className="hidden sm:flex">
+          <input 
+            type="file" 
+            id="loadInput" 
+            className="hidden" 
+            accept=".json"
+            aria-label="Load session file"
+            onChange={loadSession}
+          />
+          <Button 
+            variant="secondary" 
+            onClick={saveSession}
+            aria-label="Save session file"
+            title="Save Session" 
+            className="hidden sm:flex"
+          >
             <Download />
           </Button>
         </div>
         <select 
+          id="theme-select"
           value={theme} 
-          onChange={(e) => setTheme((e.target as HTMLSelectElement).value)} 
+          onChange={(e) => setTheme((e.target as HTMLSelectElement).value)}
+          aria-label="Select color theme"
           className="bg-bg border border-border text-xs rounded px-2 py-1 focus:outline-none w-auto min-w-[100px] shrink-0"
         >
           <option value="">Catppuccin</option>
@@ -257,11 +312,16 @@ export const App = () => {
           <option value="theme-tokyo">Tokyo Night</option>
         </select>
       </header>
-      <main className="flex-1 flex flex-col md:flex-row overflow-hidden">
+      <main role="main" className="flex-1 flex flex-col md:flex-row overflow-hidden">
         <div className="flex-1 flex flex-col border-r border-border min-w-[300px] relative">
           <div className="p-4 border-b border-border bg-bg sticky top-0 z-10 flex justify-between items-center">
-            <h2 className="font-semibold text-textMuted uppercase text-xs tracking-wider">Builder</h2>
-            <Button onClick={() => setIsBlockMenuOpen(!isBlockMenuOpen)} className="relative">
+            <h2 aria-label="Builder section" className="font-semibold text-textMuted uppercase text-xs tracking-wider">Builder</h2>
+            <Button 
+              onClick={() => setIsBlockMenuOpen(!isBlockMenuOpen)}
+              aria-label="Open block menu"
+              aria-expanded={isBlockMenuOpen}
+              className="relative"
+            >
               <Plus /> Add Block
             </Button>
           </div>
@@ -294,11 +354,13 @@ export const App = () => {
           </div>
         </div>
         <div className="flex-1 flex flex-col bg-bg min-w-[300px]">
-          <div className="p-3 border-b border-border bg-surface flex justify-between items-center">
+          <div role="region" aria-label="Prompt output" className="p-3 border-b border-border bg-surface flex justify-between items-center">
             <div className="flex gap-2">
               {(Object.keys({ xml: null, json: null, yaml: null, toon: null, md: null }) as Format[]).map(fmt => (
                 <button 
                   key={fmt}
+                  aria-label={`Switch to ${fmt.toUpperCase()} format`}
+                  aria-pressed={format === fmt}
                   className={`px-3 py-1 rounded text-xs font-bold uppercase transition-colors ${
                     format === fmt 
                       ? 'bg-primary text-bg' 
@@ -318,10 +380,20 @@ export const App = () => {
                 ~{tokenCount} tokens
               </span>
               <div className="flex gap-2">
-                <Button variant="secondary" onClick={copyToClipboard} title="Copy to Clipboard">
+                <Button 
+                  variant="secondary" 
+                  onClick={copyToClipboard}
+                  aria-label="Copy prompt to clipboard"
+                  title="Copy to Clipboard"
+                >
                   <Copy /> {copyFeedback ? 'Copied!' : 'Copy'}
                 </Button>
-                <Button variant="secondary" onClick={downloadFile} title="Download File">
+                <Button 
+                  variant="secondary" 
+                  onClick={downloadFile}
+                  aria-label="Download prompt file"
+                  title="Download File"
+                >
                   <Download />
                 </Button>
               </div>

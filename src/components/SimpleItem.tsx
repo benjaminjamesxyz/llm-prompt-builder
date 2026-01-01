@@ -19,30 +19,34 @@ export const SimpleItem = ({ node, index, updateNode, deleteNode, moveItem, isFi
         type="text" 
         value={node.content} 
         onInput={(e) => updateNode(node.id, { content: (e.target as HTMLInputElement).value })}
+        aria-label="List item content"
         className="flex-1 bg-bg border border-border rounded px-3 py-1.5 text-sm text-text focus:outline-none focus:border-primary"
         placeholder="List item..."
       />
       <div className="flex gap-0.5">
         <button 
-          onClick={() => moveItem(index, -1)} 
-          disabled={isFirst} 
-          className="p-1 text-textMuted hover:text-text disabled:opacity-30 disabled:hover:text-textMuted" 
+          onClick={() => moveItem(index, -1)}
+          disabled={isFirst}
+          aria-label="Move list item up"
+          className="p-1 text-textMuted hover:text-text disabled:opacity-30 disabled:hover:text-textMuted"
           title="Move Up"
         >
           <ChevronUp />
         </button>
         <button 
           onClick={() => moveItem(index, 1)} 
-          disabled={isLast} 
-          className="p-1 text-textMuted hover:text-text disabled:opacity-30 disabled:hover:text-textMuted" 
+          disabled={isLast}
+          aria-label="Move list item down"
+          className="p-1 text-textMuted hover:text-text disabled:opacity-30 disabled:hover:text-textMuted"
           title="Move Down"
         >
           <ChevronDown />
         </button>
       </div>
       <button 
-        onClick={() => deleteNode(node.id)} 
-        className="p-1.5 text-textMuted hover:text-red-400 transition-colors" 
+        onClick={() => deleteNode(node.id)}
+        aria-label="Delete list item"
+        className="p-1.5 text-textMuted hover:text-red-400 transition-colors"
         title="Delete Item"
       >
         <Trash />
