@@ -26,7 +26,7 @@
   --accent: #f38ba8;
 }
 
-.theme-dracula {
+:root.theme-dracula {
   --bg: #282a36;
   --surface: #44475a;
   --surface2: #6272a4;
@@ -39,7 +39,7 @@
   --accent: #ff5555;
 }
 
-.theme-gruvbox {
+:root.theme-gruvbox {
   --bg: #282828;
   --surface: #3c3836;
   --surface2: #504945;
@@ -52,7 +52,7 @@
   --accent: #fb4934;
 }
 
-.theme-tokyo {
+:root.theme-tokyo {
   --bg: #1a1b26;
   --surface: #24283b;
   --surface2: #414868;

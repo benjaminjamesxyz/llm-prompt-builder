@@ -1,3 +1,4 @@
+import { memo } from 'preact/compat';
 import { Button } from './Button';
 import { Copy, Download } from './Icons';
 import { FormatSelector } from './FormatSelector';
@@ -13,7 +14,7 @@ interface OutputPanelProps {
   onDownload: () => void;
 }
 
-export const OutputPanel = ({
+const OutputPanelInternal = ({
   format,
   onFormatChange,
   highlightedCode,
@@ -63,3 +64,15 @@ export const OutputPanel = ({
     </div>
   );
 };
+
+export const OutputPanel = memo(OutputPanelInternal, (prevProps, nextProps) => {
+  return (
+    prevProps.format === nextProps.format &&
+    prevProps.highlightedCode === nextProps.highlightedCode &&
+    prevProps.tokenCount === nextProps.tokenCount &&
+    prevProps.onCopy === nextProps.onCopy &&
+    prevProps.copyFeedback === nextProps.copyFeedback &&
+    prevProps.onDownload === nextProps.onDownload &&
+    prevProps.onFormatChange === nextProps.onFormatChange
+  );
+});

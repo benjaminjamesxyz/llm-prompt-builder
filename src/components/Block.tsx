@@ -1,3 +1,4 @@
+import { memo } from 'preact/compat';
 import { Node } from '../types';
 import { Button } from './Button';
 import { Plus, ChevronUp, ChevronDown, Trash, List, Type } from './Icons';
@@ -16,7 +17,7 @@ interface BlockProps {
   depth?: number;
 }
 
-export const Block = ({ node, index, updateNode, deleteNode, moveNode, addChild, depth = 0 }: BlockProps) => {
+const BlockInternal = ({ node, index, updateNode, deleteNode, moveNode, addChild, depth = 0 }: BlockProps) => {
   const handleContentChange = (e: Event) => {
     const target = e.target as HTMLTextAreaElement;
     updateNode(node.id, { content: target.value });
@@ -139,3 +140,18 @@ export const Block = ({ node, index, updateNode, deleteNode, moveNode, addChild,
     </div>
   );
 };
+
+export const Block = memo(BlockInternal, (prevProps, nextProps) => {
+  return (
+    prevProps.node.id === nextProps.node.id &&
+    prevProps.node.tag === nextProps.node.tag &&
+    prevProps.node.content === nextProps.node.content &&
+    prevProps.node.isList === nextProps.node.isList &&
+    prevProps.index === nextProps.index &&
+    prevProps.depth === nextProps.depth &&
+    prevProps.updateNode === nextProps.updateNode &&
+    prevProps.deleteNode === nextProps.deleteNode &&
+    prevProps.moveNode === nextProps.moveNode &&
+    prevProps.addChild === nextProps.addChild
+  );
+});

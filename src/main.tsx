@@ -11,8 +11,6 @@ if (root) {
     </ErrorBoundary>,
     root
   );
-  document.body.style.background = '';
-  document.body.style.color = '';
 } else {
   console.error('Root element #app not found');
 }
