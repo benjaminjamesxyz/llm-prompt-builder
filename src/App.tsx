@@ -14,10 +14,7 @@ import { useFileOperations } from './hooks/useFileOperations';
 import { useSessionStorage } from './hooks/useSessionStorage';
 import { useModelSelection } from './hooks/useModelSelection';
 import { DEFAULT_FORMAT, DEFAULT_THEME, COPY_FEEDBACK_DURATION } from './constants';
-import yaml from 'js-yaml';
 import 'prismjs';
-import 'prismjs/components/prism-markdown';
-import 'prismjs/components/prism-yaml';
 
 export const App = () => {
   const [nodes, setNodes] = useState<Node[]>(() => {
@@ -27,12 +24,31 @@ export const App = () => {
   const [theme, setTheme] = useState<string>(DEFAULT_THEME);
   const [copyFeedback, setCopyFeedback] = useState<boolean>(false);
   const [isBlockMenuOpen, setIsBlockMenuOpen] = useState<boolean>(false);
+  const [yamlModule, setYamlModule] = useState<any>(null);
 
   useSessionStorage(nodes);
 
   const nodeOps = useNodeOperations(nodes, setNodes);
   const fileOps = useFileOperations(nodes, setNodes);
   const modelSelection = useModelSelection(setNodes);
+
+  useEffect(() => {
+    if (format === 'yaml' && !yamlModule) {
+      import('js-yaml').then(mod => setYamlModule(mod));
+    }
+
+    const Prism = (window as any).Prism;
+    if (Prism) {
+      if (format === 'md' && !Prism.languages.markdown) {
+        // @ts-expect-error - Prism language components don't have type definitions
+        import('prismjs/components/prism-markdown');
+      }
+      if (format === 'yaml' && !Prism.languages.yaml) {
+        // @ts-expect-error - Prism language components don't have type definitions
+        import('prismjs/components/prism-yaml');
+      }
+    }
+  }, [format, yamlModule]);
 
   const output = useMemo(() => {
     try {
@@ -42,7 +58,7 @@ export const App = () => {
         case 'json':
           return JSON.stringify(toObjectTree(nodes), null, 2);
         case 'yaml':
-          return yaml.dump(toObjectTree(nodes));
+          return yamlModule ? yamlModule.dump(toObjectTree(nodes)) : 'Loading YAML formatter...';
         case 'toon':
           return toTOON(nodes);
         case 'md':
@@ -53,7 +69,7 @@ export const App = () => {
     } catch (e) {
       return `Error generating ${format.toUpperCase()}:\n${(e as Error).message}`;
     }
-  }, [nodes, format]);
+  }, [nodes, format, yamlModule]);
 
   const highlightedCode = useMemo(() => {
     return highlightCode(output, format);
@@ -100,7 +116,7 @@ export const App = () => {
   }, [fileOps]);
 
   useEffect(() => {
-    document.body.className = theme;
+    document.documentElement.className = theme;
   }, [theme]);
 
   return (

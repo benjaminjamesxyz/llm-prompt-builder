@@ -1,3 +1,4 @@
+import { memo } from 'preact/compat';
 import { Block } from './Block';
 import { Plus } from './Icons';
 import { Button } from './Button';
@@ -16,7 +17,7 @@ interface BuilderPanelProps {
   selectedModel: string;
 }
 
-export const BuilderPanel = ({
+const BuilderPanelInternal = ({
   nodes,
   updateNode,
   deleteNode,
@@ -74,3 +75,17 @@ export const BuilderPanel = ({
     </div>
   );
 };
+
+export const BuilderPanel = memo(BuilderPanelInternal, (prevProps, nextProps) => {
+  return (
+    prevProps.nodes === nextProps.nodes &&
+    prevProps.updateNode === nextProps.updateNode &&
+    prevProps.deleteNode === nextProps.deleteNode &&
+    prevProps.moveNode === nextProps.moveNode &&
+    prevProps.addChild === nextProps.addChild &&
+    prevProps.isBlockMenuOpen === nextProps.isBlockMenuOpen &&
+    prevProps.setIsBlockMenuOpen === nextProps.setIsBlockMenuOpen &&
+    prevProps.onAddBlock === nextProps.onAddBlock &&
+    prevProps.selectedModel === nextProps.selectedModel
+  );
+});
