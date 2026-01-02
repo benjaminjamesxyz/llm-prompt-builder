@@ -3,124 +3,88 @@
 ## 🎯 Current Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                    GitHub Repository                        │
-│                   llm-prompt-builder                       │
-│                                                           │
-│         Push to master or staging branches                    │
-└─────────────────────┬───────────────────────────────────────┘
-                      │
-        ┌─────────────┴─────────────┐
-        │                           │
-        ▼                           ▼
-┌──────────────────┐     ┌──────────────────────────┐
-│  GitHub Actions  │     │  Cloudflare Git          │
-│   (Test Only)   │     │    Integration          │
-│                 │     │                         │
-│  ✓ Typecheck    │     │  ✓ Checkout code         │
-│  ✓ Vitest tests │     │  ✓ Install dependencies  │
-│  ✓ Block PRs    │     │  ✓ bun run build        │
-│                 │     │  ✓ Deploy to Pages      │
-└──────────────────┘     └──────────────────────────┘
-                                │
-                ┌───────────┴───────────┐
-                │                       │
-                ▼                       ▼
-         ┌─────────┐          ┌─────────────┐
-         │Production│          │   Staging   │
-         │  master  │          │  staging    │
-         │          │          │             │
-         │prompt-   │          │staging.     │
-         │builder.  │          │prompt-      │
-         │benjaminj  │          │builder.     │
-         │ames.xyz  │          │benjaminj    │
-         └─────────┘          │ames.xyz     │
-                              └─────────────┘
+┌─────────────────────────────────────────────────────┐
+│              GitHub Repository                   │
+│          llm-prompt-builder                     │
+│                                                     │
+│      Push to master OR PR to master                │
+└───────────────────┬─────────────────────────────────┘
+                    │
+          ┌───────────┴───────────┐
+          │                       │
+          ▼                       ▼
+   ┌─────────────┐      ┌─────────────────────┐
+   │   GitHub    │      │   Cloudflare      │
+   │   Actions   │      │      Pages        │
+   │             │      │                   │
+   │  ✓ Tests    │◄─────│  ✓ Deployed      │
+   │  ✓ Build    │      │  ✓ Live on CDN  │
+   │  ✓ Deploy    │      └───────────────────┘
+   └─────────────┘
+           │
+           ▼
+   ┌─────────────────┐
+   │  Production    │
+   │  Site         │
+   │                │
+   │  prompt-       │
+   │  builder.      │
+   │  benjaminj      │
+   │  ames.xyz      │
+   └─────────────────┘
 ```
 
 ---
 
 ## ✅ What Changed
 
-### Before (Failed Approach)
-```
-GitHub Actions:
-├─ Test job
-├─ Deploy job (wrangler CLI) ❌ Failed!
-│  └─ Tried to deploy using wrangler
-│  └─ Conflicted with Cloudflare Git integration
-└─ Project not found error
-```
+### Before
+- Mixed approaches (Git Integration + wrangler CLI)
+- Conflicting deployment methods
+- Staging deployment that wasn't used
+- Misleading documentation
 
-### After (Working Approach)
-```
-GitHub Actions:
-└─ Test job only ✅
-   ├─ TypeScript typecheck
-   └─ Vitest tests (40 tests)
-
-Cloudflare Git Integration:
-└─ Automatic deployment ✅
-   ├─ Builds on push to master/staging
-   ├─ Deploys to Pages
-   └─ No manual deployment needed
-```
+### After
+- Single approach: **wrangler CLI via GitHub Actions** ✅
+- Clear, simple deployment flow
+- No staging (production only)
+- Preview deployments for PRs
+- Accurate documentation
 
 ---
 
 ## 🔄 How It Works Now
 
-### 1. GitHub Actions (Test & Validate)
+### GitHub Actions (Test & Deploy)
 
-**Purpose**: Run tests before code is merged
+**Purpose**: Validate code and deploy to Cloudflare Pages
 
 **Triggers**:
-- Push to `master` or `staging`
-- Pull requests to `master`
+- Push to `master` branch → Production deployment
+- Pull request to `master` → Preview deployment
+- Both run tests first
 
 **What it does**:
-```yaml
+```bash
 1. Checkout code
 2. Setup Bun runtime
 3. Install dependencies
 4. Run TypeScript typecheck
 5. Run Vitest tests (40 tests)
+6. Build project with rsbuild
+7. Deploy to Cloudflare Pages via wrangler CLI
 ```
 
 **Result**:
-- ✅ Tests pass → Allow merge
-- ❌ Tests fail → Block merge (if branch protection enabled)
+- ✅ Tests pass → Continue to build/deploy
+- ❌ Tests fail → Stop deployment
+- ✅ Production site updated (push to master)
+- ✅ Preview deployment created (PR to master)
 
-**Does NOT**:
-- ❌ Deploy anything
-- ❌ Build anything (Cloudflare does this)
-- ❌ Access Cloudflare API
-
----
-
-### 2. Cloudflare Git Integration (Deploy)
-
-**Purpose**: Automatically build and deploy
-
-**Triggers**:
-- Push to `master` (production)
-- Push to `staging` (preview)
-- Pull requests to `master` (preview)
-
-**What it does**:
-```yaml
-1. Checkout code from GitHub
-2. Install dependencies (bun install)
-3. Run build (bun run build)
-4. Deploy dist/ to Cloudflare Pages
-5. Activate custom domains (if configured)
-```
-
-**Result**:
-- ✅ Production site updated
-- ✅ Staging site updated
-- ✅ Preview deployments for PRs
-- ✅ No manual intervention needed
+**Uses**:
+- GitHub Secrets for Cloudflare API
+- wrangler CLI for deployment
+- Bun for build runtime
 
 ---
 
@@ -141,34 +105,12 @@ git push origin master
 **What happens automatically**:
 1. ✅ GitHub Actions starts
 2. ✅ Runs typecheck and tests
-3. ✅ Cloudflare Git integration starts
-4. ✅ Builds project
-5. ✅ Deploys to Pages
-6. ✅ Updates production site
-7. ✅ https://prompt-builder.benjaminjames.xyz updated
+3. ✅ Builds project with rsbuild
+4. ✅ Deploys to Cloudflare Pages (wrangler CLI)
+5. ✅ Updates production site
+6. ✅ https://prompt-builder.benjaminjames.xyz updated
 
-### Staging Deployment
-
-```bash
-# Developer workflow
-git checkout staging
-git pull origin staging
-# Make changes
-git add .
-git commit -m "test: staging update"
-git push origin staging
-```
-
-**What happens automatically**:
-1. ✅ GitHub Actions starts
-2. ✅ Runs typecheck and tests
-3. ✅ Cloudflare Git integration starts
-4. ✅ Builds project
-5. ✅ Deploys to Pages
-6. ✅ Updates staging site
-7. ✅ https://staging.prompt-builder.benjaminjames.xyz updated
-
-### Pull Request Workflow
+### Pull Request / Preview Deployment
 
 ```bash
 # Developer workflow
@@ -177,59 +119,78 @@ git checkout -b feature/new-feature
 git add .
 git commit -m "feat: new feature"
 git push origin feature/new-feature
-# Create PR in GitHub
+# Create PR in GitHub (to master)
 ```
 
 **What happens automatically**:
 1. ✅ GitHub Actions starts
 2. ✅ Runs typecheck and tests
-3. ✅ Cloudflare Git integration starts
-4. ✅ Builds project
-5. ✅ Creates preview deployment
-6. ✅ Preview URL available in PR
-7. ✅ Merge when ready → Triggers production deployment
+3. ✅ Builds project with rsbuild
+4. ✅ Creates preview deployment (wrangler CLI)
+5. ✅ Preview URL available in PR checks
+6. ✅ Merge PR → Triggers production deployment
 
 ---
 
 ## 🎯 Benefits of This Approach
 
 ### ✅ Simplicity
-- No GitHub Secrets needed for deployment
-- No wrangler CLI configuration needed
-- No duplicate build processes
-- Cloudflare manages everything
+- Single deployment method (wrangler CLI)
+- Clear pipeline: test → build → deploy
+- All managed in GitHub Actions
+- No separate Cloudflare Git integration needed
 
 ### ✅ Reliability
-- Cloudflare handles build environment
-- No "project not found" errors
-- Automatic retry on failures
-- Better error logs
+- Tests must pass before deployment
+- Preview deployments for every PR
+- Production deploys only from master
+- Full visibility in GitHub Actions logs
 
 ### ✅ Speed
-- No double building (GitHub Actions + Cloudflare)
-- Faster deployments
-- Less resource usage
+- Single pipeline (no double builds)
+- Fast deployment via wrangler CLI
+- Preview deployments available in ~2 minutes
+- Production updates automatically on merge
 
 ### ✅ Quality Control
-- Tests run before every deployment
-- PRs blocked if tests fail (with branch protection)
-- Preview deployments for testing
+- Tests block deployment if they fail
+- Preview deployments allow testing before merge
+- Protected master branch (recommended)
+- Manual approval can be required (if configured)
 
 ---
 
 ## 🚀 What You Need to Do
 
-### Step 1: Verify Cloudflare Git Integration (Already Done ✅)
+### Step 1: Verify GitHub Secrets (Already Done ✅)
+
+1. Go to: https://github.com/benjaminjamesxyz/llm-prompt-builder/settings/secrets/actions
+2. Verify these secrets exist:
+   - `CLOUDFLARE_API_TOKEN`
+   - `CLOUDFLARE_ACCOUNT_ID`
+3. Ensure they have correct permissions:
+   - API Token: Pages - Edit permission
+   - Account ID: Your Cloudflare account ID
+
+### Step 2: Verify Wrangler Configuration (Already Done ✅)
+
+`wrangler.toml` should contain:
+```toml
+name = "llm-prompt-builder"
+compatibility_date = "2024-01-01"
+pages_build_output_dir = "dist"
+```
+
+### Step 3: Verify Project in Cloudflare (Already Done ✅)
 
 1. Go to: https://dash.cloudflare.com
 2. Workers & Pages → llm-prompt-builder
-3. Check "Source" should show "GitHub"
-4. Verify build settings:
+3. Verify:
+   - Project name: `llm-prompt-builder`
    - Production branch: `master`
-   - Build command: `bun run build`
-   - Build output directory: `dist`
+   - Custom domain: `prompt-builder.benjaminjames.xyz`
 
-### Step 2: Test Deployment (Automatic)
+### Step 4: Test Deployment (Automatic)
 
 ```bash
 # Test production deployment
@@ -243,17 +204,33 @@ git push origin master
 ```
 
 **Watch what happens**:
-1. GitHub Actions runs tests (should pass ✅)
-2. Cloudflare automatically builds and deploys
-3. Site updates in ~2 minutes
-4. Visit: https://prompt-builder.benjaminjames.xyz
+1. GitHub Actions starts (see Actions tab)
+2. Tests run (should pass ✅)
+3. Build runs (rsbuild)
+4. wrangler deploys to Cloudflare Pages
+5. Site updates in ~2 minutes
+6. Visit: https://prompt-builder.benjaminjames.xyz
 
-### Step 3: Add Branch Protection (Optional but Recommended)
+### Step 5: Test Preview Deployment
 
-1. Go to: https://github.com/benjaminjamesxyz/llm-prompt-builder/settings/branches
-2. Add rule for `master`:
-   - ✅ Require status checks to pass: `test`
-   - ✅ Require branches to be up-to-date
+```bash
+# Test preview deployment
+git checkout -b test-preview-deployment
+# Make small change
+echo "# Preview test" >> README.md
+git add README.md
+git commit -m "test: preview deployment"
+git push origin test-preview-deployment
+# Create PR in GitHub (to master branch)
+```
+
+**Watch what happens**:
+1. GitHub Actions starts
+2. Tests run (should pass ✅)
+3. Build runs (rsbuild)
+4. wrangler creates preview deployment
+5. Preview URL available in PR
+6. Merge PR → Triggers production deployment
 
 ---
 
@@ -262,84 +239,107 @@ git push origin master
 ### Updated Files
 
 **`.github/workflows/deploy.yml`**
-- ❌ Removed deploy jobs (wrangler deployment)
-- ❌ Removed GitHub Secrets references
-- ✅ Kept test job (typecheck + vitest)
-- ✅ Simplified to just validation
+- ❌ Removed staging branch trigger
+- ❌ Removed deploy-staging job
+- ✅ Renamed deploy-production → deploy
+- ✅ Added PR support for preview deployments
+- ✅ Simplified to single deployment pipeline
 
-**No longer needed** (but kept for reference):
-- `wrangler.toml` - Not used by Git integration
-- GitHub Secrets for deployment - Not needed
+**`package.json`**
+- ❌ Removed deploy:staging script
+- ✅ Renamed deploy:prod → deploy
+
+**`CICD_ARCHITECTURE.md`**
+- ✅ Complete rewrite to reflect wrangler CLI approach
+- ✅ Updated architecture diagram
+- ✅ Updated all sections for single approach
 
 ---
 
 ## 🔍 Troubleshooting
 
-### Tests fail but Cloudflare still deploys
+### Tests fail but deployment continues
 
-**Expected behavior**: Cloudflare will still deploy even if tests fail.
-
-**Fix**: Enable branch protection:
-- Settings → Branches → Add rule
-- Require `test` status check to pass
-- This prevents merges when tests fail
-
-### Changes not appearing on site
+**Expected**: Deployment stops if tests fail.
 
 **Check**:
-1. Wait 2-3 minutes for Cloudflare deployment
-2. Check Cloudflare Dashboard → Deployments
-3. Check for build errors in Cloudflare logs
-4. Clear browser cache
+1. GitHub Actions job status
+2. Ensure `deploy` job has `needs: test`
+3. Tests must pass for deployment to start
 
-### Preview deployments not working
+### Deployment fails with "Project not found"
 
 **Check**:
-1. Go to project Settings → Preview deployments
-2. Ensure preview branch is configured (`staging` or `All branches`)
-3. Check preview custom domains are set up
+1. `wrangler.toml` has correct project name
+2. GitHub Secret `CLOUDFLARE_ACCOUNT_ID` is correct
+3. Project exists in Cloudflare Dashboard
+4. API Token has Pages permission
+
+### Preview deployment not created
+
+**Check**:
+1. PR is created against `master` branch
+2. GitHub Actions is running for the PR
+3. Check the `deploy` job logs in Actions tab
+4. wrangler CLI successfully created preview deployment
+
+### Secrets not found error
+
+**Check**:
+1. Go to repository Settings → Secrets and variables → Actions
+2. Both secrets exist: `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`
+3. Secrets are not empty
+4. Repository has access to Cloudflare (no org restrictions)
 
 ---
 
 ## 📚 Documentation Links
 
 - **GitHub Actions**: https://github.com/benjaminjamesxyz/llm-prompt-builder/actions
+- **Wrangler CLI**: https://developers.cloudflare.com/pages/functions/wrangler-configuration/
 - **Cloudflare Pages**: https://dash.cloudflare.com → Workers & Pages → llm-prompt-builder
-- **Cloudflare Deployments**: https://dash.cloudflare.com → Workers & Pages → llm-prompt-builder → Deployments
 
 ---
 
 ## ✅ Success Checklist
 
-- [ ] Cloudflare Git integration set up (done ✅)
-- [ ] Workflow simplified to tests only (done ✅)
-- [ ] Pushed to master - tests pass ✅
-- [ ] Cloudflare deployed automatically ✅
-- [ ] Production site accessible ✅
-- [ ] Staging site accessible ✅
-- [ ] Preview deployments work for PRs (optional)
-- [ ] Branch protection enabled (optional)
+- [ ] GitHub Secrets configured (done ✅)
+- [ ] wrangler.toml configured (done ✅)
+- [ ] Project exists in Cloudflare (done ✅)
+- [ ] Workflow updated to wrangler CLI (done ✅)
+- [ ] Staging deployment removed (done ✅)
+- [ ] deploy:prod renamed to deploy (done ✅)
+- [ ] Pushed to master - tests pass
+- [ ] Production deployment works
+- [ ] Preview deployments work for PRs
+- [ ] CICD_ARCHITECTURE.md updated (done ✅)
 
 ---
 
 ## 🎉 Summary
 
 **What we did**:
-- ❌ Removed conflicting wrangler deployment from GitHub Actions
-- ✅ Let Cloudflare Git integration handle deployment
-- ✅ GitHub Actions now only runs tests for validation
+- ❌ Removed staging deployment completely
+- ❌ Removed all staging-related configurations
+- ✅ Switched to wrangler CLI only approach
+- ✅ Simplified deployment pipeline
+- ✅ Added preview deployment support for PRs
+- ✅ Updated documentation to match actual setup
 
 **Why this works**:
-- No more "project not found" errors
-- No GitHub Secrets needed
-- Cloudflare manages builds and deployments
-- Tests still run before merges
+- No more conflicting deployment methods
+- Single source of truth: GitHub Actions + wrangler CLI
+- Clear, predictable deployment flow
+- Tests must pass before deployment
+- Preview deployments for safe testing
 
 **Result**:
-- ✅ Automatic deployment on push
-- ✅ Tests validate code quality
 - ✅ Simple, reliable CI/CD
+- ✅ Automatic deployment on push to master
+- ✅ Preview deployments for PRs
+- ✅ Tests validate code quality
+- ✅ Accurate documentation
 
 ---
 
-**Your CI/CD should now work perfectly! 🚀**
+**Your CI/CD should now work perfectly with wrangler CLI! 🚀**
