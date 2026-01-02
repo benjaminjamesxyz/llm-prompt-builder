@@ -7,7 +7,7 @@ import { Code, Plus, Copy, Download, Upload } from './components/Icons';
 import { MODEL_EXAMPLES, MODELS } from './data/index';
 import { toXML, toObjectTree, toTOON, toMarkdown } from './utils/formatters';
 import { saveToLocalStorage } from './utils/storage';
-import { highlightCode } from './utils/prism';
+import { highlightCode, getFormatLoadingState, clearFormatLoadingState } from './utils/prism';
 import { uuid } from './utils/uuid';
 import { loadNodesFromLocalStorage } from './utils/storage';
 import { validateFileSize, safeJsonParse, validateNodes, ValidationError } from './utils/validation';
@@ -77,6 +77,11 @@ export const App = () => {
     if (defaultExample) loadExampleData(defaultExample.nodes);
   };
 
+  const handleFormatChange = (newFormat: Format) => {
+    setFormat(newFormat);
+    clearFormatLoadingState(newFormat); // Clear loading state when format changes
+  };
+
   const updateNode = (id: string, changes: Partial<Node>) => {
     const recUpdate = (list: Node[]): Node[] => list.map(n => {
       if (n.id === id) return { ...n, ...changes };
@@ -136,7 +141,15 @@ export const App = () => {
     }
   }, [nodes, format]);
 
-  const highlightedCode = useMemo(() => {
+  const [isHighlighting, setIsHighlighting] = useState(false);
+  
+const highlightedCode = useMemo(() => {
+    // Check if we need to highlight and if Prism is available
+    if (getFormatLoadingState(format)) {
+      setIsHighlighting(true);
+      return output; // Return raw output while loading
+    }
+    setIsHighlighting(false);
     return highlightCode(output, format);
   }, [output, format]);
 
@@ -355,23 +368,23 @@ export const App = () => {
         </div>
         <div className="flex-1 flex flex-col bg-bg min-w-[300px]">
           <div role="region" aria-label="Prompt output" className="p-3 border-b border-border bg-surface flex justify-between items-center">
-            <div className="flex gap-2">
-              {(Object.keys({ xml: null, json: null, yaml: null, toon: null, md: null }) as Format[]).map(fmt => (
-                <button 
-                  key={fmt}
-                  aria-label={`Switch to ${fmt.toUpperCase()} format`}
-                  aria-pressed={format === fmt}
-                  className={`px-3 py-1 rounded text-xs font-bold uppercase transition-colors ${
-                    format === fmt 
-                      ? 'bg-primary text-bg' 
-                      : 'text-textMuted hover:text-text bg-bg border border-border'
-                  }`} 
-                  onClick={() => setFormat(fmt)}
-                >
-                  {fmt}
-                </button>
-              ))}
-            </div>
+<div className="flex gap-2">
+                {(Object.keys({ xml: null, json: null, yaml: null, toon: null, md: null }) as Format[]).map(fmt => (
+                  <button 
+                    key={fmt}
+                    aria-label={`Switch to ${fmt.toUpperCase()} format`}
+                    aria-pressed={format === fmt}
+                    className={`px-3 py-1 rounded text-xs font-bold uppercase transition-colors ${
+                      format === fmt 
+                        ? 'bg-primary text-bg' 
+                        : 'text-textMuted hover:text-text bg-bg border border-border'
+                    }`} 
+                    onClick={() => handleFormatChange(fmt)}
+                  >
+                    {fmt}
+                  </button>
+                ))}
+              </div>
             <div className="flex items-center gap-4">
               <span 
                 className="text-xs font-mono text-textMuted" 
@@ -399,11 +412,16 @@ export const App = () => {
               </div>
             </div>
           </div>
-          <div className="flex-1 relative overflow-auto bg-bg p-4">
-            <pre className="m-0 h-full font-mono text-sm leading-relaxed">
-              <code dangerouslySetInnerHTML={{ __html: highlightedCode }}></code>
-            </pre>
-          </div>
+<div className="flex-1 relative overflow-auto bg-bg p-4">
+              {isHighlighting && (
+                <div className="absolute inset-0 flex items-center justify-center bg-bg bg-opacity-90 z-10">
+                  <div className="text-textMuted">Loading syntax highlighting...</div>
+                </div>
+              )}
+              <pre className="m-0 h-full font-mono text-sm leading-relaxed">
+                <code dangerouslySetInnerHTML={{ __html: highlightedCode }}></code>
+              </pre>
+            </div>
         </div>
       </main>
     </div>
