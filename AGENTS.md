@@ -6,18 +6,25 @@ This file provides guidelines for agentic coding tools working in this repositor
 
 ```bash
 # Start development server (runs on localhost:3000)
-pnpm dev
+bun dev
 
 # Build for production (outputs to dist/)
-pnpm build
+bun build
 
 # Preview production build
-pnpm preview
+bun preview
 
 # TypeScript type checking (strict mode enabled - must pass)
-pnpm typecheck
+bun typecheck
 
-# No test framework is currently configured
+# Run tests (Vitest with jsdom + @testing-library/preact)
+bun test
+bun test:ci          # Run tests once (CI mode)
+bun test:coverage     # Generate coverage report
+
+# Run single test file: bun test src/utils/validation.test.ts
+# Run tests matching name: bun test -t "should format simple node"
+
 # No linting tools (ESLint/Prettier) are configured
 ```
 
@@ -116,7 +123,7 @@ export const validateFileSize = (file: File): { valid: boolean; error?: Validati
 - Export types from central index: `export type * from './types'`
 
 ### Performance Optimization
-- Code split heavy dependencies via Vite config (prismjs, js-yaml)
+- Code split heavy dependencies via Rsbuild config (prismjs, js-yaml)
 - Lazy load modules when possible
 - Use `useMemo` for derived data and computed values
 - Minimize re-renders with proper dependency arrays
