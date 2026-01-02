@@ -7,12 +7,12 @@ import { Code, Plus, Copy, Download, Upload } from './components/Icons';
 import { MODEL_EXAMPLES, MODELS } from './data/index';
 import { toXML, toObjectTree, toTOON, toMarkdown } from './utils/formatters';
 import { saveToLocalStorage } from './utils/storage';
-import { highlightCode, getFormatLoadingState, clearFormatLoadingState } from './utils/prism';
+import { highlightCode, getFormatLoadingState, clearFormatLoadingState, markPrismLoaded } from './utils/prism';
+import { useModuleLoader } from './utils/moduleLoader';
 import { uuid } from './utils/uuid';
 import { loadNodesFromLocalStorage } from './utils/storage';
 import { validateFileSize, safeJsonParse, validateNodes, ValidationError } from './utils/validation';
 import { showToast } from './components/Toast';
-import yaml from 'js-yaml';
 
 const ERROR_MESSAGES = {
   [ValidationError.FILE_TOO_LARGE]: 'File exceeds 500KB limit (ERR_FILE_SIZE)',
@@ -29,6 +29,17 @@ export const App = () => {
   const [copyFeedback, setCopyFeedback] = useState(false);
   const [selectedModel, setSelectedModel] = useState('generic');
   const [isBlockMenuOpen, setIsBlockMenuOpen] = useState(false);
+  
+  // Load modules dynamically when format changes
+  const { isLoaded: prismLoaded } = useModuleLoader('prism');
+  const { isLoaded: yamlLoaded } = useModuleLoader('yaml');
+  
+  // Mark Prism as loaded when moduleLoader indicates it's ready
+  useEffect(() => {
+    if (prismLoaded) {
+      markPrismLoaded();
+    }
+  }, [prismLoaded]);
 
   useEffect(() => {
     saveToLocalStorage('prompt_builder_autosave', nodes);
@@ -130,7 +141,11 @@ export const App = () => {
         case 'xml': return toXML(nodes);
         case 'json': return JSON.stringify(toObjectTree(nodes), null, 2);
         case 'yaml': {
-          return yaml.dump(toObjectTree(nodes));
+          // Dynamically use yaml if loaded, otherwise show loading message
+          if (yamlLoaded && typeof (window as any).yaml !== 'undefined') {
+            return (window as any).yaml.dump(toObjectTree(nodes));
+          }
+          return '// Loading YAML formatter...';
         }
         case 'toon': return toTOON(nodes);
         case 'md': return toMarkdown(nodes);
@@ -139,19 +154,19 @@ export const App = () => {
     } catch (e) {
       return `Error generating ${format.toUpperCase()}:\n${(e as Error).message}`;
     }
-  }, [nodes, format]);
+  }, [nodes, format, yamlLoaded]);
 
   const [isHighlighting, setIsHighlighting] = useState(false);
   
 const highlightedCode = useMemo(() => {
-    // Check if we need to highlight and if Prism is available
-    if (getFormatLoadingState(format)) {
+    // Check if we need to highlight and if Prism is loaded
+    if (!prismLoaded && getFormatLoadingState(format)) {
       setIsHighlighting(true);
       return output; // Return raw output while loading
     }
     setIsHighlighting(false);
     return highlightCode(output, format);
-  }, [output, format]);
+  }, [output, format, prismLoaded]);
 
   const tokenCount = useMemo(() => Math.ceil(output.length / 4), [output]);
 
