@@ -1,6 +1,6 @@
 # LLM Prompt Builder
 
-A structured prompt engineering tool built with Vite, Preact, and Tailwind CSS.
+A structured prompt engineering tool built with Rsbuild, Preact, and Tailwind CSS.
 
 ## Features
 
@@ -82,8 +82,7 @@ This project uses automated CI/CD with GitHub Actions to deploy to Cloudflare Pa
 ### Branch Strategy
 
 - **master** → Production (`prompt-builder.benjaminjames.xyz`)
-- **staging** → Staging (`staging.prompt-builder.benjaminjames.xyz`)
-- Pull requests to master → Run tests only
+- Pull requests to master → Preview deployment
 
 ### Local Deployment (Wrangler)
 
@@ -91,10 +90,7 @@ Deploy directly from your local machine:
 
 ```bash
 # Deploy to production
-bun run deploy:prod
-
-# Deploy to staging
-bun run deploy:staging
+bun run deploy
 ```
 
 ### GitHub Actions CI/CD
@@ -102,7 +98,7 @@ bun run deploy:staging
 Automated deployment is configured in `.github/workflows/deploy.yml`:
 
 **Triggers:**
-- Push to `master` or `staging` branches
+- Push to `master` branch
 - Pull requests to `master`
 
 **Pipeline Steps:**
@@ -150,12 +146,6 @@ Name: prompt-builder
 Content: llm-prompt-builder.pages.dev
 TTL: Auto
 Proxy: Proxied (Orange cloud)
-
-Type: CNAME
-Name: staging
-Content: llm-prompt-builder.pages.dev
-TTL: Auto
-Proxy: Proxied (Orange cloud)
 ```
 
 ### Manual Deployment Workflow
@@ -170,20 +160,6 @@ git pull origin master
 git add .
 git commit -m "your message"
 git push origin master
-
-# GitHub Actions automatically deploys
-```
-
-**Staging Deployment:**
-```bash
-# Create/update staging branch
-git checkout staging
-git pull origin staging
-
-# Make changes
-git add .
-git commit -m "your message"
-git push origin staging
 
 # GitHub Actions automatically deploys
 ```
@@ -208,7 +184,7 @@ git push origin feature/your-feature
 In GitHub repository settings for `master` branch:
 - Require status checks to pass before merging:
   - ✅ `test` (typecheck + tests)
-  - ✅ `deploy-production`
+  - ✅ `deploy`
 - Require branches to be up-to-date before merging
 - Optionally require pull request reviews
 
@@ -229,22 +205,48 @@ bun run test:coverage
 
 All tests must pass before deployment.
 
+## Troubleshooting
+
+### Project not found error
+
+If wrangler deployment fails with "Project not found":
+1. Verify project name in `wrangler.toml` matches Cloudflare
+2. Check `CLOUDFLARE_ACCOUNT_ID` GitHub Secret is correct
+3. Ensure project exists in Cloudflare Dashboard
+4. API Token has Pages permission
+
+### DNS propagation issues
+
+If custom domain doesn't work:
+1. Wait up to 24 hours for DNS propagation
+2. Check DNS records in Cloudflare Dashboard
+3. Use https://dnschecker.org to verify
+4. Ensure SSL/TLS is configured (Full mode recommended)
+
+### Preview deployment not created
+
+If PR preview deployment doesn't appear:
+1. Ensure PR is created against `master` branch
+2. Check GitHub Actions logs for `deploy` job
+3. Verify wrangler CLI created preview successfully
+4. Check Cloudflare Pages → Deployments tab
+
 ## Tech Stack
 
-- **Framework**: Preact 10.x
-- **Build Tool**: Vite 5.x
-- **CSS**: Tailwind CSS 3.x
-- **Package Manager**: bun
-- **Runtime**: bun
+- **Framework**: Preact 10.28.1
+- **Build Tool**: Rsbuild 1.7.1
+- **CSS**: Tailwind CSS 4.1.18
+- **Package Manager**: bun 1.3.5
+- **Runtime**: bun 1.3.5
 - **Syntax Highlighting**: PrismJS
 - **YAML**: js-yaml
-- **Language**: TypeScript
+- **Language**: TypeScript 5.9.3
 
 ## Performance Optimizations
 
 - Code splitting for PrismJS and YAML modules
 - Lazy loading of syntax highlighting components
-- Optimized bundle size with Vite's tree shaking
+- Optimized bundle size with Rsbuild's tree shaking
 - Static build ready for edge deployment
 - CSS extraction and minification
 
