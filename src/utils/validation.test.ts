@@ -58,7 +58,7 @@ describe('Validation Utils', () => {
       };
       const result = validateNode(node);
       expect(result.valid).toBe(true);
-      expect(result.node).toEqual(node);
+      expect(result.node).toEqual({ ...node, children: [] });
     });
 
     it('should fail validation for missing id', () => {

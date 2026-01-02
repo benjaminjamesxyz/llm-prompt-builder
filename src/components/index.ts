@@ -5,3 +5,7 @@ export * from './BlockPicker';
 export * from './Icons';
 export { Toast, showToast, clearAllToasts } from './Toast';
 export { ErrorBoundary } from './ErrorBoundary';
+export { Header } from './Header';
+export { FormatSelector } from './FormatSelector';
+export { OutputPanel } from './OutputPanel';
+export { BuilderPanel } from './BuilderPanel';

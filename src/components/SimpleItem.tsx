@@ -12,19 +12,24 @@ interface SimpleItemProps {
 }
 
 export const SimpleItem = ({ node, index, updateNode, deleteNode, moveItem, isFirst, isLast }: SimpleItemProps) => {
+  const handleContentChange = (e: Event) => {
+    const target = e.target as HTMLInputElement;
+    updateNode(node.id, { content: target.value });
+  };
+
   return (
     <div className="flex items-center gap-2 mb-2 node-enter group/item">
       <span className="text-xs font-mono text-textMuted select-none w-4 text-right">{index + 1}.</span>
-      <input 
-        type="text" 
-        value={node.content} 
-        onInput={(e) => updateNode(node.id, { content: (e.target as HTMLInputElement).value })}
+      <input
+        type="text"
+        value={node.content}
+        onInput={handleContentChange}
         aria-label="List item content"
         className="flex-1 bg-bg border border-border rounded px-3 py-1.5 text-sm text-text focus:outline-none focus:border-primary"
         placeholder="List item..."
       />
       <div className="flex gap-0.5">
-        <button 
+        <button
           onClick={() => moveItem(index, -1)}
           disabled={isFirst}
           aria-label="Move list item up"
@@ -33,8 +38,8 @@ export const SimpleItem = ({ node, index, updateNode, deleteNode, moveItem, isFi
         >
           <ChevronUp />
         </button>
-        <button 
-          onClick={() => moveItem(index, 1)} 
+        <button
+          onClick={() => moveItem(index, 1)}
           disabled={isLast}
           aria-label="Move list item down"
           className="p-1 text-textMuted hover:text-text disabled:opacity-30 disabled:hover:text-textMuted"
@@ -43,7 +48,7 @@ export const SimpleItem = ({ node, index, updateNode, deleteNode, moveItem, isFi
           <ChevronDown />
         </button>
       </div>
-      <button 
+      <button
         onClick={() => deleteNode(node.id)}
         aria-label="Delete list item"
         className="p-1.5 text-textMuted hover:text-red-400 transition-colors"
