@@ -4,6 +4,7 @@ import { Plus, ChevronUp, ChevronDown, Trash, List, Type } from './Icons';
 import { SimpleItem } from './SimpleItem';
 import { uuid } from '../utils/uuid';
 import { sanitizeTagInput } from '../utils/validation';
+import { moveNodeInList } from '../utils/nodeOperations';
 
 interface BlockProps {
   node: Node;
@@ -29,14 +30,14 @@ export const Block = ({ node, index, updateNode, deleteNode, moveNode, addChild,
 
   const toggleListMode = () => {
     const newIsList = !node.isList;
-    let updates: Partial<Node> = { isList: newIsList };
+    const updates: Partial<Node> = { isList: newIsList };
     if (newIsList) {
       const lines = node.content.split('\n').filter(l => l.trim() !== '');
       const newChildren = lines.map(line => ({ id: uuid(), tag: "ITEM", content: line }));
-      updates.children = [...(node.children || []), ...newChildren];
+      updates.children = [...(node.children ?? []), ...newChildren];
       updates.content = "";
     } else {
-      const listContent = (node.children || []).map(c => c.content).join('\n');
+      const listContent = (node.children ?? []).map(c => c.content).join('\n');
       updates.content = listContent;
       updates.children = [];
     }
@@ -45,15 +46,12 @@ export const Block = ({ node, index, updateNode, deleteNode, moveNode, addChild,
 
   const addListItem = () => {
     const newItem = { id: uuid(), tag: "ITEM", content: "" };
-    updateNode(node.id, { children: [...(node.children || []), newItem] });
+    updateNode(node.id, { children: [...(node.children ?? []), newItem] });
   };
 
   const moveItem = (childIndex: number, direction: number) => {
-    const newChildren = [...(node.children || [])];
-    if (childIndex + direction < 0 || childIndex + direction >= newChildren.length) return;
-    const temp = newChildren[childIndex];
-    newChildren[childIndex] = newChildren[childIndex + direction];
-    newChildren[childIndex + direction] = temp;
+    const children = node.children ?? [];
+    const newChildren = moveNodeInList(children, childIndex, direction);
     updateNode(node.id, { children: newChildren });
   };
 
@@ -62,20 +60,20 @@ export const Block = ({ node, index, updateNode, deleteNode, moveNode, addChild,
       <div className="flex flex-col gap-2 bg-surface p-3 rounded shadow-sm hover:shadow-md transition-shadow">
         <div className="flex items-center gap-2">
           <span className="text-xs font-mono text-textMuted select-none w-4 text-right">{depth + 1}.{index + 1}</span>
-          <input 
-            type="text" 
-            value={node.tag} 
-            onInput={handleTagChange} 
+          <input
+            type="text"
+            value={node.tag}
+            onInput={handleTagChange}
             placeholder="TAG_NAME"
             aria-label={`Block tag name: ${node.tag}`}
             id={`tag-${node.id}`}
-            className="bg-bg border border-border rounded px-2 py-1 text-primary font-bold font-mono text-sm w-1/3 focus:outline-none focus:border-primary placeholder-surface2" 
+            className="bg-bg border border-border rounded px-2 py-1 text-primary font-bold font-mono text-sm w-1/3 focus:outline-none focus:border-primary placeholder-surface2"
           />
           <div className="ml-auto flex gap-1 items-center">
-            <button 
+            <button
               onClick={toggleListMode}
               aria-label={node.isList ? "Switch to text mode" : "Switch to list mode"}
-              className="p-1.5 rounded hover:bg-surface2 text-textMuted hover:text-text transition-colors" 
+              className="p-1.5 rounded hover:bg-surface2 text-textMuted hover:text-text transition-colors"
               title={node.isList ? "Switch to Text Mode" : "Switch to List Mode"}
             >
               {node.isList ? <Type /> : <List />}
@@ -91,19 +89,19 @@ export const Block = ({ node, index, updateNode, deleteNode, moveNode, addChild,
         </div>
         {node.isList ? (
           <div className="mt-2 pl-4 border-l border-border/50">
-            {node.children && node.children.map((child, i) => (
-              <SimpleItem 
-                key={child.id} 
-                node={child} 
-                index={i} 
-                updateNode={updateNode} 
-                deleteNode={deleteNode} 
-                moveItem={moveItem} 
-                isFirst={i === 0} 
-                isLast={i === (node.children!.length - 1)} 
+            {node.children?.map((child, i) => (
+              <SimpleItem
+                key={child.id}
+                node={child}
+                index={i}
+                updateNode={updateNode}
+                deleteNode={deleteNode}
+                moveItem={moveItem}
+                isFirst={i === 0}
+                isLast={i === ((node.children?.length ?? 0) - 1)}
               />
             ))}
-            <button 
+            <button
               onClick={addListItem}
               aria-label="Add list item"
               className="text-xs flex items-center gap-1 text-primary hover:text-primaryHover mt-2"
@@ -112,8 +110,8 @@ export const Block = ({ node, index, updateNode, deleteNode, moveNode, addChild,
             </button>
           </div>
         ) : (
-          <textarea 
-            value={node.content} 
+          <textarea
+            value={node.content}
             onInput={handleContentChange}
             placeholder="Enter prompt content here..."
             aria-label={`Block content for ${node.tag}`}
@@ -125,15 +123,15 @@ export const Block = ({ node, index, updateNode, deleteNode, moveNode, addChild,
       {!node.isList && node.children && node.children.length > 0 && (
         <div className="ml-4">
           {node.children.map((child, i) => (
-            <Block 
-              key={child.id} 
-              node={child} 
-              index={i} 
-              depth={depth + 1} 
-              updateNode={updateNode} 
-              deleteNode={deleteNode} 
-              moveNode={moveNode} 
-              addChild={addChild} 
+            <Block
+              key={child.id}
+              node={child}
+              index={i}
+              depth={depth + 1}
+              updateNode={updateNode}
+              deleteNode={deleteNode}
+              moveNode={moveNode}
+              addChild={addChild}
             />
           ))}
         </div>

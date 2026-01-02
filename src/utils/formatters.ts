@@ -1,30 +1,31 @@
 import { Node } from '../types';
+import { NODE_INDENT_SPACES } from '../constants';
 
 export const toXML = (nodes: Node[], indent = 0): string => {
-  const sp = '  '.repeat(indent);
+  const sp = ' '.repeat(NODE_INDENT_SPACES * indent);
   return nodes.map(node => {
     const hasNewlines = node.content.includes('\n');
     const tag = node.tag;
     const inner = node.children && node.children.length > 0
       ? `\n${toXML(node.children, indent + 1)}\n${sp}`
-      : (hasNewlines ? `\n${sp}  ${node.content.replace(/\n/g, `\n${sp}  `)}\n${sp}` : node.content);
+      : (hasNewlines ? `\n${sp}${' '.repeat(NODE_INDENT_SPACES)}${node.content.replace(/\n/g, `\n${sp}${' '.repeat(NODE_INDENT_SPACES)}`)}\n${sp}` : node.content);
     return `${sp}<${tag}>${inner}</${tag}>`;
   }).join('\n');
 };
 
-export const toObjectTree = (nodes: Node[]): Record<string, any> => {
-  const obj: Record<string, any> = {};
+export const toObjectTree = (nodes: Node[]): Record<string, unknown> => {
+  const obj: Record<string, unknown> = {};
   nodes.forEach(node => {
     const key = node.tag || "BLOCK";
-    let value: any;
+    let value: unknown;
     if (node.children && node.children.length > 0) {
       value = toObjectTree(node.children);
     } else {
       value = node.content;
     }
-    if (obj[key]) {
+    if (key in obj) {
       if (Array.isArray(obj[key])) {
-        obj[key].push(value);
+        (obj[key] as unknown[]).push(value);
       } else {
         obj[key] = [obj[key], value];
       }
@@ -37,7 +38,7 @@ export const toObjectTree = (nodes: Node[]): Record<string, any> => {
 
 export const toTOON = (nodes: Node[], indent = 0): string => {
   let out = "";
-  const sp = '  '.repeat(indent);
+  const sp = ' '.repeat(NODE_INDENT_SPACES * indent);
   nodes.forEach(node => {
     const key = node.tag;
     if (!node.children || node.children.length === 0) {
@@ -50,6 +51,7 @@ export const toTOON = (nodes: Node[], indent = 0): string => {
     const count = children.length;
     const allChildrenAreLeaves = children.every(c => !c.children || c.children.length === 0);
     const allTagsIdentical = new Set(children.map(c => c.tag)).size === 1;
+
     if (allChildrenAreLeaves && allTagsIdentical) {
       const values = children.map(c => {
         let v = c.content;
@@ -59,15 +61,15 @@ export const toTOON = (nodes: Node[], indent = 0): string => {
       out += `${sp}${key}[${count}]: ${values}\n`;
       return;
     }
+
     const allChildrenHaveChildren = children.every(c => c.children && c.children.length > 0);
     if (allChildrenHaveChildren && allTagsIdentical) {
       const firstChild = children[0];
       const columns = firstChild.children!.map(c => c.tag);
-      const originalColumnTags = firstChild.children!.map(c => c.tag);
       const headerCols = columns;
       out += `${sp}${key}[${count}]{${headerCols.join(',')}}:\n`;
       children.forEach(child => {
-        const row = originalColumnTags.map(colTag => {
+        const row = headerCols.map(colTag => {
           const cellNode = child.children!.find(c => c.tag === colTag);
           let val = cellNode ? cellNode.content : "";
           if (val === "true" || val === "false") return val;
@@ -77,10 +79,11 @@ export const toTOON = (nodes: Node[], indent = 0): string => {
           }
           return val;
         });
-        out += `${sp}  ${row.join(',')}\n`;
+        out += `${sp}${' '.repeat(NODE_INDENT_SPACES)}${row.join(',')}\n`;
       });
       return;
     }
+
     out += `${sp}${key}:\n`;
     out += toTOON(children, indent + 1);
   });

@@ -1,7 +1,6 @@
-// Maximum file size: 500KB (user preference)
-const MAX_FILE_SIZE_BYTES = 500 * 1024;
+import { Node } from '../types';
+import { MAX_FILE_SIZE_BYTES } from '../constants';
 
-// Error codes for detailed error messages
 export enum ValidationError {
   FILE_TOO_LARGE = 'ERR_FILE_SIZE',
   INVALID_JSON = 'ERR_INVALID_JSON',
@@ -10,60 +9,62 @@ export enum ValidationError {
   PARSE_ERROR = 'ERR_PARSE'
 }
 
-// Validate file size (500KB limit)
 export const validateFileSize = (file: File): { valid: boolean; error?: ValidationError } => {
   if (file.size > MAX_FILE_SIZE_BYTES) {
-    return { 
-      valid: false, 
-      error: ValidationError.FILE_TOO_LARGE 
+    return {
+      valid: false,
+      error: ValidationError.FILE_TOO_LARGE
     };
   }
   return { valid: true };
 };
 
-// Safe JSON parsing with error codes
 export const safeJsonParse = <T>(json: string): { data: T | null; error?: ValidationError } => {
   try {
     const parsed = JSON.parse(json);
-    // Basic prototype pollution protection - check for __proto__ in plain objects
     if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
       if (Object.prototype.hasOwnProperty.call(parsed, '__proto__')) {
         return { data: null, error: ValidationError.INVALID_SCHEMA };
       }
     }
-    return { data: parsed };
-  } catch (err) {
+    return { data: parsed as T };
+  } catch {
     return { data: null, error: ValidationError.INVALID_JSON };
   }
 };
 
-// Schema validation for Node objects
-export const validateNode = (data: any): { valid: boolean; node?: any; error?: ValidationError } => {
-  if (!data || typeof data !== 'object') {
+export const validateNode = (data: unknown): { valid: boolean; node?: Node; error?: ValidationError } => {
+  if (!data || typeof data !== 'object' || Array.isArray(data)) {
     return { valid: false, error: ValidationError.INVALID_SCHEMA };
   }
-  if (!data.id || typeof data.id !== 'string') {
+  const obj = data as Record<string, unknown>;
+  if (!obj.id || typeof obj.id !== 'string') {
     return { valid: false, error: ValidationError.INVALID_SCHEMA };
   }
-  if (!data.tag || typeof data.tag !== 'string') {
+  if (!obj.tag || typeof obj.tag !== 'string') {
     return { valid: false, error: ValidationError.INVALID_SCHEMA };
   }
-  if (data.content && typeof data.content !== 'string') {
+  if (obj.content !== undefined && typeof obj.content !== 'string') {
     return { valid: false, error: ValidationError.INVALID_SCHEMA };
   }
-  if (data.children && !Array.isArray(data.children)) {
+  if (obj.children !== undefined && !Array.isArray(obj.children)) {
     return { valid: false, error: ValidationError.INVALID_SCHEMA };
   }
-  return { valid: true, node: data };
+  const validNode: Node = {
+    id: obj.id as string,
+    tag: obj.tag as string,
+    content: (obj.content as string) ?? '',
+    children: (obj.children as Node[]) ?? []
+  };
+  return { valid: true, node: validNode };
 };
 
-// Validate multiple nodes (for file uploads)
-export const validateNodes = (nodes: any[]): { valid: boolean; nodes?: any[]; error?: ValidationError } => {
+export const validateNodes = (nodes: unknown): { valid: boolean; nodes?: Node[]; error?: ValidationError } => {
   if (!Array.isArray(nodes)) {
     return { valid: false, error: ValidationError.INVALID_SCHEMA };
   }
-  
-  const validatedNodes: any[] = [];
+
+  const validatedNodes: Node[] = [];
   for (const node of nodes) {
     const result = validateNode(node);
     if (!result.valid) {
@@ -74,22 +75,14 @@ export const validateNodes = (nodes: any[]): { valid: boolean; nodes?: any[]; er
   return { valid: true, nodes: validatedNodes };
 };
 
-// Sanitize tag input to prevent HTML injection
 export const sanitizeTagInput = (input: string): string => {
-  // Remove HTML tags
   let sanitized = input.replace(/<[^>]*>/g, '');
-  // Remove script/event handler attributes
   sanitized = sanitized.replace(/on\w+\s*=/gi, '');
-  // Replace spaces with underscores
   sanitized = sanitized.replace(/\s+/g, '_');
-  // Remove special characters except underscore, hyphen, alphanumeric
   sanitized = sanitized.replace(/[^a-zA-Z0-9_-]/g, '');
   return sanitized.trim();
 };
 
-// Sanitize text content (basic protection)
 export const sanitizeContent = (content: string): string => {
-  // Don't sanitize for prompt builder use case
-  // Users need to enter arbitrary text
   return content;
 };

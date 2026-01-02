@@ -10,10 +10,14 @@ interface BlockPickerProps {
 }
 
 export const BlockPicker = ({ model, onSelect, onClose }: BlockPickerProps) => {
-  const modelConfig = MODELS[model as keyof typeof MODELS] || MODELS['generic'];
-  const availableBlocks = modelConfig.blocks.map((key: string) => ({ key, ...BLOCK_DEFS[key] })).filter((b: any) => b.tag);
+  const modelConfig = MODELS[model as keyof typeof MODELS] ?? MODELS['generic'];
+  const availableBlocks: Array<BlockDef & { tag: string; desc: string }> = modelConfig.blocks
+    .map((key: string) => ({ key, ...BLOCK_DEFS[key] }))
+    .filter((b): b is BlockDef & { tag: string; desc: string } & { key: string } =>
+      'tag' in b && 'desc' in b
+    );
   const menuRef = useRef<HTMLDivElement>(null);
-  
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
@@ -35,7 +39,7 @@ export const BlockPicker = ({ model, onSelect, onClose }: BlockPickerProps) => {
         </button>
       </div>
       <div className="max-h-80 overflow-y-auto p-2 grid gap-1">
-        {availableBlocks.map((block: BlockDef & { tag: string; desc: string }) => (
+        {availableBlocks.map((block) => (
           <button
             key={block.tag}
             onClick={() => onSelect(block)}
@@ -47,8 +51,8 @@ export const BlockPicker = ({ model, onSelect, onClose }: BlockPickerProps) => {
             <div className="text-xs text-textMuted mt-0.5 truncate group-hover:text-text">{block.desc}</div>
           </button>
         ))}
-        <button 
-          onClick={() => onSelect({ tag: "NEW_BLOCK", content: "", desc: "" })} 
+        <button
+          onClick={() => onSelect({ tag: "NEW_BLOCK", content: "", desc: "" })}
           className="text-left px-3 py-2 rounded hover:bg-surface2 transition-colors border-t border-border mt-1"
         >
           <span className="font-bold text-text text-xs">Empty Block</span>
