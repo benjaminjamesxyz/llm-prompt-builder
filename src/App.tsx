@@ -7,12 +7,15 @@ import { Code, Plus, Copy, Download, Upload } from './components/Icons';
 import { MODEL_EXAMPLES, MODELS } from './data/index';
 import { toXML, toObjectTree, toTOON, toMarkdown } from './utils/formatters';
 import { saveToLocalStorage } from './utils/storage';
-import { highlightCode, getFormatLoadingState, clearFormatLoadingState, markPrismLoaded } from './utils/prism';
-import { useModuleLoader } from './utils/moduleLoader';
+import { highlightCode } from './utils/prism';
 import { uuid } from './utils/uuid';
 import { loadNodesFromLocalStorage } from './utils/storage';
 import { validateFileSize, safeJsonParse, validateNodes, ValidationError } from './utils/validation';
 import { showToast } from './components/Toast';
+import 'prismjs';
+import 'prismjs/components/prism-markdown';
+import 'prismjs/components/prism-yaml';
+import yaml from 'js-yaml';
 
 const ERROR_MESSAGES = {
   [ValidationError.FILE_TOO_LARGE]: 'File exceeds 500KB limit (ERR_FILE_SIZE)',
@@ -29,17 +32,6 @@ export const App = () => {
   const [copyFeedback, setCopyFeedback] = useState(false);
   const [selectedModel, setSelectedModel] = useState('generic');
   const [isBlockMenuOpen, setIsBlockMenuOpen] = useState(false);
-  
-  // Load modules dynamically when format changes
-  const { isLoaded: prismLoaded } = useModuleLoader('prism');
-  const { isLoaded: yamlLoaded } = useModuleLoader('yaml');
-  
-  // Mark Prism as loaded when moduleLoader indicates it's ready
-  useEffect(() => {
-    if (prismLoaded) {
-      markPrismLoaded();
-    }
-  }, [prismLoaded]);
 
   useEffect(() => {
     saveToLocalStorage('prompt_builder_autosave', nodes);
@@ -90,7 +82,6 @@ export const App = () => {
 
   const handleFormatChange = (newFormat: Format) => {
     setFormat(newFormat);
-    clearFormatLoadingState(newFormat); // Clear loading state when format changes
   };
 
   const updateNode = (id: string, changes: Partial<Node>) => {
@@ -135,18 +126,12 @@ export const App = () => {
     setNodes(recAdd(nodes));
   };
 
-  const output = useMemo(() => {
+const output = useMemo(() => {
     try {
       switch (format) {
         case 'xml': return toXML(nodes);
         case 'json': return JSON.stringify(toObjectTree(nodes), null, 2);
-        case 'yaml': {
-          // Dynamically use yaml if loaded, otherwise show loading message
-          if (yamlLoaded && typeof (window as any).yaml !== 'undefined') {
-            return (window as any).yaml.dump(toObjectTree(nodes));
-          }
-          return '// Loading YAML formatter...';
-        }
+        case 'yaml': return yaml.dump(toObjectTree(nodes));
         case 'toon': return toTOON(nodes);
         case 'md': return toMarkdown(nodes);
         default: return '';
@@ -154,19 +139,11 @@ export const App = () => {
     } catch (e) {
       return `Error generating ${format.toUpperCase()}:\n${(e as Error).message}`;
     }
-  }, [nodes, format, yamlLoaded]);
+  }, [nodes, format]);
 
-  const [isHighlighting, setIsHighlighting] = useState(false);
-  
-const highlightedCode = useMemo(() => {
-    // Check if we need to highlight and if Prism is loaded
-    if (!prismLoaded && getFormatLoadingState(format)) {
-      setIsHighlighting(true);
-      return output; // Return raw output while loading
-    }
-    setIsHighlighting(false);
+ const highlightedCode = useMemo(() => {
     return highlightCode(output, format);
-  }, [output, format, prismLoaded]);
+  }, [output, format]);
 
   const tokenCount = useMemo(() => Math.ceil(output.length / 4), [output]);
 
@@ -427,12 +404,7 @@ const highlightedCode = useMemo(() => {
               </div>
             </div>
           </div>
-<div className="flex-1 relative overflow-auto bg-bg p-4">
-              {isHighlighting && (
-                <div className="absolute inset-0 flex items-center justify-center bg-bg bg-opacity-90 z-10">
-                  <div className="text-textMuted">Loading syntax highlighting...</div>
-                </div>
-              )}
+<div className="flex-1 overflow-auto bg-bg p-4">
               <pre className="m-0 h-full font-mono text-sm leading-relaxed">
                 <code dangerouslySetInnerHTML={{ __html: highlightedCode }}></code>
               </pre>
