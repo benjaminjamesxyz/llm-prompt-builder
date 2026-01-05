@@ -7,12 +7,11 @@
   "scripts": {
     "dev": "rsbuild dev",
     "build": "rsbuild build",
-    "preview": "rsbuild preview",
+    "build:wasm": "cd wasm && wasm-pack build --target web --out-dir ../src/wasm-pkg",
     "typecheck": "tsc --noEmit",
+    "preview": "rsbuild preview",
     "test": "vitest",
-    "test:ci": "vitest run",
-    "test:coverage": "vitest run --coverage",
-    "deploy": "bun run build && bunx wrangler pages deploy dist --project-name=llm-prompt-builder"
+    "deploy": "bun run build && wrangler pages deploy dist"
   },
   "dependencies": {
     "dompurify": "^3.3.1",

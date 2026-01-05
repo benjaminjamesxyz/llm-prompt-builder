@@ -13,6 +13,7 @@ import { useNodeOperations } from './hooks/useNodeOperations';
 import { useFileOperations } from './hooks/useFileOperations';
 import { useSessionStorage } from './hooks/useSessionStorage';
 import { useModelSelection } from './hooks/useModelSelection';
+import { useWasm } from './hooks/useWasm';
 import { DEFAULT_FORMAT, DEFAULT_THEME, COPY_FEEDBACK_DURATION } from './constants';
 import 'prismjs';
 
@@ -25,6 +26,8 @@ export const App = () => {
   const [copyFeedback, setCopyFeedback] = useState<boolean>(false);
   const [isBlockMenuOpen, setIsBlockMenuOpen] = useState<boolean>(false);
   const [yamlModule, setYamlModule] = useState<any>(null);
+
+  const { isReady: isWasmReady, calculateTokens, fastXml } = useWasm();
 
   useSessionStorage(nodes);
 
@@ -54,6 +57,14 @@ export const App = () => {
     try {
       switch (format) {
         case 'xml':
+          if (isWasmReady) {
+            try {
+              return fastXml(nodes);
+            } catch (e) {
+              console.error("WASM XML generation failed, falling back to JS", e);
+              return toXML(nodes);
+            }
+          }
           return toXML(nodes);
         case 'json':
           return JSON.stringify(toObjectTree(nodes), null, 2);
@@ -69,13 +80,18 @@ export const App = () => {
     } catch (e) {
       return `Error generating ${format.toUpperCase()}:\n${(e as Error).message}`;
     }
-  }, [nodes, format, yamlModule]);
+  }, [nodes, format, yamlModule, isWasmReady]);
 
   const highlightedCode = useMemo(() => {
     return highlightCode(output, format);
   }, [output, format]);
 
-  const tokenCount = useMemo(() => Math.ceil(output.length / 4), [output]);
+  const tokenCount = useMemo(() => {
+    if (isWasmReady) {
+      return calculateTokens(output);
+    }
+    return Math.ceil(output.length / 4);
+  }, [output, isWasmReady]);
 
   const copyToClipboard = useCallback(() => {
     const textarea = document.createElement('textarea');
