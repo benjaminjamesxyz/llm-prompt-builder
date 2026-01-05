@@ -14,6 +14,7 @@
     "test:ci": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:wasm": "cd wasm && cargo test",
+    "lint": "bun run typecheck && bun run lint:wasm",
     "lint:wasm": "cd wasm && cargo clippy -- -D warnings && cargo fmt -- --check",
     "deploy": "bun run build && wrangler pages deploy dist"
   },
