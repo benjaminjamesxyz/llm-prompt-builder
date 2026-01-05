@@ -37,4 +37,9 @@ export const BLOCK_DEFS: BlockDefs = {
   thinking: { tag: "THINKING", content: "Step-by-step reasoning...", desc: "Internal monologue" },
   instruction: { tag: "INSTRUCTION", content: "Please follow these steps...", desc: "Direct commands" },
   tools: { tag: "TOOLS", content: "Available tools...", desc: "Tool definitions" },
+  tot_problem: { tag: "TOT_PROBLEM", content: "State the main problem clearly...", desc: "Define the core problem" },
+  tot_branch: { tag: "TOT_BRANCH", content: "Branch: [approach name]", desc: "Thought path/solution branch" },
+  tot_thought: { tag: "TOT_THOUGHT", content: "Step 1: [thought process]", desc: "Individual thought step" },
+  tot_evaluation: { tag: "TOT_EVALUATION", content: "Pros: ...\nCons: ...", desc: "Evaluate branch quality" },
+  tot_solution: { tag: "TOT_SOLUTION", content: "Chosen solution and rationale...", desc: "Best solution chosen" }
 };
