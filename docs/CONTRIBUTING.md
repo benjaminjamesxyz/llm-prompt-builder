@@ -220,7 +220,7 @@ Group imports by type:
 
 ```typescript
 // Correct order:
-import yaml from 'js-yaml';
+import init from '../wasm-pkg/llm_prompt_builder_wasm';
 import { useState, useEffect } from 'preact/hooks';
 import { Button } from './components/Button';
 import { Node, ModelConfig } from '../types';

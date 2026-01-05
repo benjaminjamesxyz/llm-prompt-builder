@@ -233,7 +233,7 @@ If PR preview deployment doesn't appear:
 - **Package Manager**: bun 1.3.5
 - **Runtime**: bun 1.3.5
 - **Syntax Highlighting**: PrismJS
-- **YAML**: js-yaml
+- **YAML**: Rust/WASM (serde_yaml)
 - **Language**: TypeScript 5.9.3
 
 ## Performance Optimizations
