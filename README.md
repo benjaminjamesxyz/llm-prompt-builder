@@ -29,6 +29,10 @@ src/
 │   ├── blockDefs.ts
 │   ├── models.ts
 │   └── examples.ts
+├── docs/            # Project documentation
+│   ├── ADDING_EXAMPLES.md   # Guide for adding prompt examples
+│   ├── DEPLOYMENT.md         # Deployment instructions
+│   └── CONTRIBUTING.md       # Contribution guidelines
 ├── utils/           # Utility functions
 │   ├── uuid.ts
 │   ├── formatters.ts
@@ -77,11 +81,17 @@ bun run preview
 
 ## Deployment
 
-This project uses automated CI/CD with GitHub Actions to deploy to Cloudflare Pages.
+Automated CI/CD with GitHub Actions deploys to Cloudflare Pages.
+
+For detailed deployment instructions, see [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
+
+For contribution guidelines, see [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md).
+
+For adding examples and templates, see [docs/ADDING_EXAMPLES.md](docs/ADDING_EXAMPLES.md).
 
 ### Branch Strategy
 
-- **master** → Production (`prompt-builder.benjaminjames.xyz`)
+- **master** → Production
 - Pull requests to master → Preview deployment
 
 ### Local Deployment (Wrangler)
@@ -89,104 +99,8 @@ This project uses automated CI/CD with GitHub Actions to deploy to Cloudflare Pa
 Deploy directly from your local machine:
 
 ```bash
-# Deploy to production
 bun run deploy
 ```
-
-### GitHub Actions CI/CD
-
-Automated deployment is configured in `.github/workflows/deploy.yml`:
-
-**Triggers:**
-- Push to `master` branch
-- Pull requests to `master`
-
-**Pipeline Steps:**
-1. Checkout code
-2. Setup Bun runtime
-3. Install dependencies
-4. TypeScript typecheck (blocking)
-5. Run Vitest tests (blocking)
-6. Build project
-7. Deploy to Cloudflare Pages via Wrangler
-
-**Required GitHub Secrets:**
-- `CLOUDFLARE_ACCOUNT_ID` - Found in Cloudflare Dashboard → Workers & Pages
-- `CLOUDFLARE_API_TOKEN` - Create in Cloudflare → My Profile → API Tokens
-  - Permissions: Account > Pages > Edit
-  - Account Resources: Include > Your Account
-
-### Setting Up GitHub Secrets
-
-1. Get your Cloudflare Account ID:
-   - Go to [Cloudflare Dashboard](https://dash.cloudflare.com)
-   - Select your account
-   - Navigate to Workers & Pages
-   - Account ID is in the right sidebar
-
-2. Create API Token:
-   - Go to [My Profile → API Tokens](https://dash.cloudflare.com/profile/api-tokens)
-   - Click "Create Token"
-   - Use "Edit Cloudflare Workers" template
-   - Ensure Account > Pages > Edit permission
-   - Include your account in Account Resources
-
-3. Add secrets to GitHub:
-   - Go to repository Settings → Secrets and variables → Actions
-   - Click "New repository secret"
-   - Add `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_API_TOKEN`
-
-### DNS Configuration
-
-Add these DNS records to your Cloudflare-managed domain:
-
-```
-Type: CNAME
-Name: prompt-builder
-Content: llm-prompt-builder.pages.dev
-TTL: Auto
-Proxy: Proxied (Orange cloud)
-```
-
-### Manual Deployment Workflow
-
-**Production Deployment:**
-```bash
-# Ensure you're on master branch
-git checkout master
-git pull origin master
-
-# Make changes
-git add .
-git commit -m "your message"
-git push origin master
-
-# GitHub Actions automatically deploys
-```
-
-**Testing with Pull Requests:**
-```bash
-# Create feature branch
-git checkout -b feature/your-feature
-
-# Make changes and push
-git add .
-git commit -m "your message"
-git push origin feature/your-feature
-
-# Create PR to master
-# Tests run automatically but no deployment
-# Merge triggers production deployment
-```
-
-### Branch Protection Rules
-
-In GitHub repository settings for `master` branch:
-- Require status checks to pass before merging:
-  - ✅ `test` (typecheck + tests)
-  - ✅ `deploy`
-- Require branches to be up-to-date before merging
-- Optionally require pull request reviews
 
 ### Testing
 
