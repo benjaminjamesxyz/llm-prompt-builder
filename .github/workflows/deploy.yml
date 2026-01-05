@@ -29,6 +29,12 @@ jobs:
       - name: Build WASM
         run: bun run build:wasm
 
+      - name: Lint Rust
+        run: bun run lint:wasm
+
+      - name: Test Rust
+        run: bun run test:wasm
+
       - name: Run TypeScript typecheck
         run: bun run typecheck
 
