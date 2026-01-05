@@ -5,7 +5,6 @@ import { BuilderPanel } from './components/BuilderPanel';
 import { OutputPanel } from './components/OutputPanel';
 import { showToast } from './components/Toast';
 import { MODEL_EXAMPLES } from './data';
-import { toXML, toObjectTree, toTOON, toMarkdown } from './utils/formatters';
 import { highlightCode } from './utils/prism';
 import { loadNodesFromLocalStorage } from './utils/storage';
 import { createEmptyNode } from './utils/nodeOperations';
@@ -25,9 +24,8 @@ export const App = () => {
   const [theme, setTheme] = useState<string>(DEFAULT_THEME);
   const [copyFeedback, setCopyFeedback] = useState<boolean>(false);
   const [isBlockMenuOpen, setIsBlockMenuOpen] = useState<boolean>(false);
-  const [yamlModule, setYamlModule] = useState<any>(null);
 
-  const { isReady: isWasmReady, calculateTokens, fastXml } = useWasm();
+  const { isReady: isWasmReady, calculateTokens, fastXml, fastJson, fastYaml, fastToon, fastMarkdown } = useWasm();
 
   useSessionStorage(nodes);
 
@@ -36,10 +34,6 @@ export const App = () => {
   const modelSelection = useModelSelection(setNodes);
 
   useEffect(() => {
-    if (format === 'yaml' && !yamlModule) {
-      import('js-yaml').then(mod => setYamlModule(mod));
-    }
-
     const Prism = (window as any).Prism;
     if (Prism) {
       if (format === 'md' && !Prism.languages.markdown) {
@@ -51,36 +45,46 @@ export const App = () => {
         import('prismjs/components/prism-yaml');
       }
     }
-  }, [format, yamlModule]);
+  }, [format]);
 
   const output = useMemo(() => {
     try {
+      if (isWasmReady) {
+        try {
+          switch (format) {
+            case 'xml':
+              return fastXml(nodes);
+            case 'json':
+              return fastJson(nodes);
+            case 'yaml':
+              return fastYaml(nodes);
+            case 'toon':
+              return fastToon(nodes);
+            case 'md':
+              return fastMarkdown(nodes);
+            default:
+              return '';
+          }
+        } catch (e) {
+          console.error(`WASM ${format.toUpperCase()} generation failed, falling back to JS`, e);
+        }
+      }
+
+      // Fallbacks
       switch (format) {
         case 'xml':
-          if (isWasmReady) {
-            try {
-              return fastXml(nodes);
-            } catch (e) {
-              console.error("WASM XML generation failed, falling back to JS", e);
-              return toXML(nodes);
-            }
-          }
-          return toXML(nodes);
         case 'json':
-          return JSON.stringify(toObjectTree(nodes), null, 2);
         case 'yaml':
-          return yamlModule ? yamlModule.dump(toObjectTree(nodes)) : 'Loading YAML formatter...';
         case 'toon':
-          return toTOON(nodes);
         case 'md':
-          return toMarkdown(nodes);
+          return 'WASM module loading...';
         default:
           return '';
       }
     } catch (e) {
       return `Error generating ${format.toUpperCase()}:\n${(e as Error).message}`;
     }
-  }, [nodes, format, yamlModule, isWasmReady]);
+  }, [nodes, format, isWasmReady]);
 
   const highlightedCode = useMemo(() => {
     return highlightCode(output, format);
@@ -90,7 +94,7 @@ export const App = () => {
     if (isWasmReady) {
       return calculateTokens(output);
     }
-    return Math.ceil(output.length / 4);
+    return 0;
   }, [output, isWasmReady]);
 
   const copyToClipboard = useCallback(() => {

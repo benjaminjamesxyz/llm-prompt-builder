@@ -31,7 +31,7 @@ const OutputPanelInternal = ({
         <div className="flex items-center gap-4">
           <span
             className="text-xs font-mono text-textMuted"
-            title="Rough estimate (chars / 4)"
+            title="WASM-powered token estimate"
           >
             ~{tokenCount} tokens
           </span>

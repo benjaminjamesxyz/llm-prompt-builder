@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'preact/hooks';
-import init, { calculate_tokens, fast_xml } from '../wasm-pkg/llm_prompt_builder_wasm';
+import init, { calculate_tokens, fast_xml, fast_json, fast_yaml, fast_toon, fast_markdown } from '../wasm-pkg/llm_prompt_builder_wasm';
 
 let wasmInitPromise: Promise<unknown> | null = null;
 
@@ -20,6 +20,10 @@ export const useWasm = () => {
   return {
     isReady,
     calculateTokens: calculate_tokens,
-    fastXml: fast_xml
+    fastXml: fast_xml,
+    fastJson: fast_json,
+    fastYaml: fast_yaml,
+    fastToon: fast_toon,
+    fastMarkdown: fast_markdown
   };
 };
