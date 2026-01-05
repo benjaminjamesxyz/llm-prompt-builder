@@ -25,3 +25,8 @@ dist-ssr
 
 # Wrangler
 .wrangler/
+
+# Rust/WASM
+wasm/target/
+src/wasm-pkg/
+
