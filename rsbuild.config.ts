@@ -41,12 +41,6 @@ export default defineConfig({
               priority: 10,
               reuseExistingChunk: true,
             },
-            'yaml': {
-              test: /[\\/]node_modules[\\/]js-yaml[\\/]/,
-              name: 'yaml',
-              priority: 10,
-              reuseExistingChunk: true,
-            },
             'common': {
               name: 'common',
               chunks: 'async',
