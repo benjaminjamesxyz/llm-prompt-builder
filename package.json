@@ -11,6 +11,8 @@
     "typecheck": "tsc --noEmit",
     "preview": "rsbuild preview",
     "test": "vitest",
+    "test:ci": "vitest run",
+    "test:coverage": "vitest run --coverage",
     "deploy": "bun run build && wrangler pages deploy dist"
   },
   "dependencies": {
