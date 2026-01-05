@@ -205,6 +205,86 @@ bun run test:coverage
 
 All tests must pass before deployment.
 
+## Adding Examples and Templates
+
+This project includes pre-built example prompts for each supported model. You can add new examples following patterns in `src/data/`.
+
+See [docs/ADDING_EXAMPLES.md](docs/ADDING_EXAMPLES.md) for comprehensive documentation on:
+- Understanding the data structure
+- Creating new example prompts
+- Adding blocks and models
+- Best practices and patterns
+- Testing and validation
+
+### Quick Reference
+
+| File | Purpose |
+|------|---------|
+| `src/data/blockDefs.ts` | Block definitions (ROLE, TASK, etc.) |
+| `src/data/models.ts` | Model configurations (which blocks each model uses) |
+| `src/data/examples.ts` | Example prompts organized by model |
+| `src/types/index.ts` | TypeScript type definitions |
+
+### Available Block Categories
+
+**Text Models:**
+- Basic: role, task, context, rules, goal, example, input
+- Model-specific: system/user/assistant (OpenAI), sys_instr/user_input/model_out (Gemini)
+- Advanced: thinking (Claude), deepseek_think (DeepSeek R1), tools
+- Tree of Thought: tot_problem, tot_branch, tot_thought, tot_evaluation, tot_solution
+
+**Image Generation:**
+- Visual: subject, scene, visuals, environment, style, lighting, color, aesthetic
+- Technical: camera, shot_type, angle
+- Negative: negative
+- Parameters: params
+
+**Video Generation:**
+- All image blocks + motion, movement, audio, sfx, music
+
+### Adding a Simple Example
+
+```typescript
+import { ModelExamples } from '../types';
+import { uuid } from '../utils/uuid';
+
+export const MODEL_EXAMPLES: ModelExamples = {
+  // ... existing examples
+  openai: [
+    {
+      name: "Your Example Name",
+      nodes: [
+        { id: uuid(), tag: "SYSTEM", content: "You are a helpful assistant." },
+        { id: uuid(), tag: "USER", content: "Your user query here." }
+      ]
+    }
+  ]
+};
+```
+
+### Adding Complex Nested Example
+
+```typescript
+{
+  name: "Complex Prompt",
+  nodes: [
+    { id: uuid(), tag: "ROLE", content: "Senior Software Engineer" },
+    {
+      id: uuid(),
+      tag: "RULES",
+      isList: true,
+      children: [
+        { id: uuid(), tag: "ITEM", content: "Maintain original functionality" },
+        { id: uuid(), tag: "ITEM", content: "Use modern syntax" }
+      ]
+    },
+    { id: uuid(), tag: "TASK", content: "Refactor the code." }
+  ]
+}
+```
+
+For detailed examples and advanced patterns (including Tree of Thought), see the [full documentation](docs/ADDING_EXAMPLES.md).
+
 ## Troubleshooting
 
 ### Project not found error
