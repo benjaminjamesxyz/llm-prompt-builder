@@ -273,8 +273,96 @@ fn to_toon_recursive(nodes: &[Node], indent: usize) -> String {
 mod tests {
     use super::*;
 
+    fn mock_node(tag: &str, content: &str) -> Node {
+        Node {
+            id: "test".to_string(),
+            tag: tag.to_string(),
+            content: content.to_string(),
+            is_list: None,
+            children: None,
+        }
+    }
+
     #[test]
     fn test_calculate_tokens() {
         assert_eq!(calculate_tokens("Hello world"), 3);
+    }
+
+    #[test]
+    fn test_to_xml_recursive() {
+        let nodes = vec![
+            mock_node("ROLE", "Assistant"),
+            Node {
+                id: "2".to_string(),
+                tag: "NESTED".to_string(),
+                content: "".to_string(),
+                is_list: None,
+                children: Some(vec![mock_node("ITEM", "Value")])
+            },
+        ];
+        let result = to_xml_recursive(&nodes, 0);
+        assert!(result.contains("<ROLE>Assistant</ROLE>"));
+        assert!(result.contains("<NESTED>"));
+        assert!(result.contains("<ITEM>Value</ITEM>"));
+    }
+
+    #[test]
+    fn test_to_object_tree() {
+        let nodes = vec![mock_node("ROLE", "Assistant"), mock_node("ROLE", "Hero")]; // Test array conversion
+        let tree = to_object_tree(&nodes);
+        assert!(tree.is_object());
+        let obj = tree.as_object().unwrap();
+        assert!(obj.contains_key("ROLE"));
+        assert!(obj["ROLE"].is_array());
+        assert_eq!(obj["ROLE"][0], "Assistant");
+        assert_eq!(obj["ROLE"][1], "Hero");
+    }
+
+    #[test]
+    fn test_to_markdown_recursive() {
+        let nodes = vec![mock_node("TASK", "Do something")];
+        let result = to_markdown_recursive(&nodes, 1);
+        assert_eq!(result, "# TASK\nDo something\n\n");
+    }
+
+    #[test]
+    fn test_to_toon_recursive_simple() {
+        let nodes = vec![mock_node("KEY", "Value")];
+        let result = to_toon_recursive(&nodes, 0);
+        assert_eq!(result, "KEY: \"Value\"\n");
+    }
+
+    #[test]
+    fn test_to_toon_recursive_compact_list() {
+        let nodes = vec![Node {
+            id: "1".to_string(),
+            tag: "LIST".to_string(),
+            content: "".to_string(),
+            is_list: None,
+            children: Some(vec![mock_node("ITEM", "A"), mock_node("ITEM", "B")])
+        }];
+        let result = to_toon_recursive(&nodes, 0);
+        assert_eq!(result, "LIST[2]: A,B\n");
+    }
+
+    #[test]
+    fn test_to_toon_recursive_table() {
+        let child1 = Node {
+            id: "c1".to_string(),
+            tag: "ROW".to_string(),
+            content: "".to_string(),
+            is_list: None,
+            children: Some(vec![mock_node("COL1", "V1"), mock_node("COL2", "V2")])
+        };
+        let nodes = vec![Node {
+            id: "p1".to_string(),
+            tag: "TABLE".to_string(),
+            content: "".to_string(),
+            is_list: None,
+            children: Some(vec![child1])
+        }];
+        let result = to_toon_recursive(&nodes, 0);
+        assert!(result.contains("TABLE[1]{COL1,COL2}:"));
+        assert!(result.contains("V1,V2"));
     }
 }
