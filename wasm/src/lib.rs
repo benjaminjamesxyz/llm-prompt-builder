@@ -50,11 +50,8 @@ fn to_xml_recursive(nodes: &[Node], indent: usize) -> String {
             } else {
                 format_content(&node.content, has_newlines, &sp)
             };
-            format!(
-                "{}
-<{}>{}</{}>",
-                sp, node.tag, inner, node.tag
-            )
+            format!("{}
+<{}>{}</{}>", sp, node.tag, inner, node.tag)
         })
         .collect::<Vec<String>>()
         .join("\n")
@@ -134,11 +131,8 @@ fn to_markdown_recursive(nodes: &[Node], level: usize) -> String {
     let mut out = String::new();
     for node in nodes {
         let header = "#".repeat(level);
-        out.push_str(&format!(
-            "{} {}
-",
-            header, node.tag
-        ));
+        out.push_str(&format!("{} {}
+", header, node.tag));
 
         if !node.content.is_empty() {
             out.push_str(&format!("{}\n\n", node.content));
@@ -262,9 +256,7 @@ fn to_toon_recursive(nodes: &[Node], indent: usize) -> String {
                     "{}{}\n",
                     sp.replace(" ", "  ") + "  ",
                     row.join(",")
-                )); // Indent logic from JS roughly " ".repeat(indent*2) -> but inside it indents more?
-                    // JS: out += `${sp}${' '.repeat(NODE_INDENT_SPACES)}${row.join(',')}\n`;
-                    // My sp is already indented. So sp + "  "
+                ));
             }
             continue;
         }
