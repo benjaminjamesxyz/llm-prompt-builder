@@ -48,11 +48,7 @@ fn to_xml_recursive(nodes: &[Node], indent: usize) -> String {
             } else {
                 format_content(&node.content, has_newlines, &sp)
             };
-            format!(
-                "{}
-<{}>{}</{}>",
-                sp, node.tag, inner, node.tag
-            )
+            format!("{}<{}>{}</{}>", sp, node.tag, inner, node.tag)
         })
         .collect::<Vec<String>>()
         .join("\n")
@@ -264,10 +260,7 @@ fn to_markdown_recursive(nodes: &[Node], level: usize) -> String {
     for node in nodes {
         let header = "#".repeat(level);
         out.push_str(&format!(
-            "{} {}
-",
-            header, node.tag
-        ));
+        out.push_str(&format!("{} {}\n", header, node.tag));
 
         if !node.content.is_empty() {
             out.push_str(&format!("{}\n\n", node.content));
@@ -303,10 +296,7 @@ fn to_toon_recursive(nodes: &[Node], indent: usize) -> String {
                 val = format!("\"{}\"", val.replace('\n', "\\n"));
             }
             out.push_str(&format!(
-                "{}{}: {}
-",
-                sp, key, val
-            ));
+            out.push_str(&format!("{}{}: {}\n", sp, key, val));
             continue;
         }
 
@@ -358,7 +348,7 @@ fn to_toon_recursive(nodes: &[Node], indent: usize) -> String {
                 .collect();
 
             out.push_str(&format!(
-                "{}{} [{}]{{{}}}:\n",
+                "{}{}[{}]{{{}}}:\n",
                 sp,
                 key,
                 count,
@@ -393,7 +383,7 @@ fn to_toon_recursive(nodes: &[Node], indent: usize) -> String {
                     })
                     .collect();
                 out.push_str(&format!(
-                    "{}{} \n",
+                    "{}{}\n",
                     sp.replace(" ", "  ") + "  ",
                     row.join(",")
                 ));
@@ -435,7 +425,6 @@ mod tests {
         ];
         let tree = to_prompt_tree(&nodes);
         let json_str = json_stringify(&tree, 0);
-        // Expect exact order preservation
         let first_pos = json_str.find("Z_LAST").unwrap();
         let second_pos = json_str.find("A_FIRST").unwrap();
         assert!(
