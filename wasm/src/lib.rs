@@ -463,8 +463,6 @@ mod tests {
     }
 
     #[test]
-
-    #[test]
     fn test_to_markdown_recursive() {
         let nodes = vec![mock_node("TASK", "Do something")];
         let result = to_markdown_recursive(&nodes, 1);
