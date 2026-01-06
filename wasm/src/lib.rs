@@ -58,7 +58,7 @@ fn format_content(content: &str, has_newlines: bool, sp: &str) -> String {
     if has_newlines {
         let indent_block = " ".repeat(NODE_INDENT_SPACES);
         let indented_content = content.replace('\n', &format!("\n{}{}", sp, indent_block));
-        format!("\n{}{}{}\n{}", sp, indent_block, indented_content, sp)
+        format!("\n{}{}{}\n", sp, indent_block, indented_content)
     } else {
         content.to_string()
     }
@@ -260,8 +260,10 @@ fn to_markdown_recursive(nodes: &[Node], level: usize) -> String {
     for node in nodes {
         let header = "#".repeat(level);
         out.push_str(&format!(
-        out.push_str(&format!("{} {}\n", header, node.tag));
-
+            "{} {}
+",
+            header, node.tag
+        ));
         if !node.content.is_empty() {
             out.push_str(&format!("{}\n\n", node.content));
         }
@@ -296,7 +298,10 @@ fn to_toon_recursive(nodes: &[Node], indent: usize) -> String {
                 val = format!("\"{}\"", val.replace('\n', "\\n"));
             }
             out.push_str(&format!(
-            out.push_str(&format!("{}{}: {}\n", sp, key, val));
+                "{}{}: {}
+",
+                sp, key, val
+            ));
             continue;
         }
 
