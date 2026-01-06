@@ -419,6 +419,26 @@ mod tests {
     }
 
     #[test]
+    fn test_to_xml_recursive() {
+        let nodes = vec![
+            mock_node("ROLE", "Assistant"),
+            Node {
+                id: "2".to_string(),
+                tag: "NESTED".to_string(),
+                content: "".to_string(),
+                is_list: None,
+                children: Some(vec![mock_node("ITEM", "Value")]),
+            },
+        ];
+        let result = to_xml_recursive(&nodes, 0);
+        assert!(result.contains("<ROLE>Assistant</ROLE>"));
+        assert!(result.contains("<NESTED>"));
+        assert!(result.contains("<ITEM>Value</ITEM>"));
+        // Check for NO blank lines (double newlines)
+        assert!(!result.contains("\n\n"));
+    }
+
+    #[test]
     fn test_fast_json_order() {
         let nodes = vec![
             mock_node("Z_LAST", "Content"),
@@ -440,26 +460,9 @@ mod tests {
         let tree = to_prompt_tree(&nodes);
         let yaml = yaml_stringify(&tree, 0);
         assert!(yaml.contains("ROLE: \"Assistant\""));
+    }
 
     #[test]
-    fn test_to_xml_recursive() {
-        let nodes = vec![
-            mock_node("ROLE", "Assistant"),
-            Node {
-                id: "2".to_string(),
-                tag: "NESTED".to_string(),
-                content: "".to_string(),
-                is_list: None,
-                children: Some(vec![mock_node("ITEM", "Value")]),
-            },
-        ];
-        let result = to_xml_recursive(&nodes, 0);
-        assert!(result.contains("<ROLE>Assistant</ROLE>"));
-        assert!(result.contains("<NESTED>"));
-        assert!(result.contains("<ITEM>Value</ITEM>"));
-        // Check for NO blank lines (double newlines)
-        assert!(!result.contains("\n\n"));
-    }
 
     #[test]
     fn test_to_markdown_recursive() {
@@ -507,6 +510,5 @@ mod tests {
         let result = to_toon_recursive(&nodes, 0);
         assert!(result.contains("TABLE[1]{COL1,COL2}:"));
         assert!(result.contains("V1,V2"));
-    }
     }
 }
