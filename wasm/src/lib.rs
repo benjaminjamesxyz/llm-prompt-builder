@@ -48,7 +48,7 @@ fn to_xml_recursive(nodes: &[Node], indent: usize) -> String {
             } else {
                 format_content(&node.content, has_newlines, &sp)
             };
-            format!("{}<{}>{}</{}>", sp, node.tag, inner, node.tag)
+            format!("{0}<{1}>{2}</{1}>", sp, node.tag, inner)
         })
         .collect::<Vec<String>>()
         .join("\n")
@@ -93,7 +93,6 @@ fn to_prompt_tree(nodes: &[Node]) -> PromptValue {
             PromptValue::String(node.content.clone())
         };
 
-        // Check if key exists to handle duplicates -> convert to array
         let mut found = false;
         for (existing_key, existing_val) in entries.iter_mut() {
             if *existing_key == key {
@@ -103,7 +102,6 @@ fn to_prompt_tree(nodes: &[Node]) -> PromptValue {
                         arr.push(value.clone());
                     }
                     _ => {
-                        // Convert current single value to array
                         let old_val =
                             std::mem::replace(existing_val, PromptValue::Array(Vec::new()));
                         if let PromptValue::Array(arr) = existing_val {
@@ -208,9 +206,7 @@ pub fn fast_yaml(val: JsValue) -> Result<String, JsValue> {
 
 fn yaml_stringify(val: &PromptValue, indent: usize) -> String {
     match val {
-        PromptValue::String(s) => {
-            escape_json_string(s) // Valid YAML scalar
-        }
+        PromptValue::String(s) => escape_json_string(s), // Valid YAML scalar
         PromptValue::Array(arr) => {
             let sp = " ".repeat(indent);
             let mut out = String::new();
