@@ -69,10 +69,13 @@
 1. Checkout code
 2. Setup Bun runtime
 3. Install dependencies
-4. Run TypeScript typecheck
-5. Run Vitest tests (40 tests)
-6. Build project with rsbuild
-7. Deploy to Cloudflare Pages via wrangler CLI
+4. Build WASM module (essential for core logic)
+5. Lint Rust (clippy + fmt)
+6. Test Rust (cargo test)
+7. Run TypeScript typecheck
+8. Run Vitest tests (40 tests)
+9. Build project with rsbuild
+10. Deploy to Cloudflare Pages via wrangler CLI
 ```
 
 **Result**:
@@ -85,6 +88,7 @@
 - GitHub Secrets for Cloudflare API
 - wrangler CLI for deployment
 - Bun for build runtime
+- Rust/WASM toolchain for core logic
 
 ---
 
@@ -104,11 +108,13 @@ git push origin master
 
 **What happens automatically**:
 1. ✅ GitHub Actions starts
-2. ✅ Runs typecheck and tests
-3. ✅ Builds project with rsbuild
-4. ✅ Deploys to Cloudflare Pages (wrangler CLI)
-5. ✅ Updates production site
-6. ✅ https://prompt-builder.benjaminjames.xyz updated
+2. ✅ Builds WASM
+3. ✅ Runs Rust lints and tests
+4. ✅ Runs typecheck and Vitest tests
+5. ✅ Builds project with rsbuild
+6. ✅ Deploys to Cloudflare Pages (wrangler CLI)
+7. ✅ Updates production site
+8. ✅ https://prompt-builder.benjaminjames.xyz updated
 
 ### Pull Request / Preview Deployment
 
@@ -124,11 +130,13 @@ git push origin feature/new-feature
 
 **What happens automatically**:
 1. ✅ GitHub Actions starts
-2. ✅ Runs typecheck and tests
-3. ✅ Builds project with rsbuild
-4. ✅ Creates preview deployment (wrangler CLI)
-5. ✅ Preview URL available in PR checks
-6. ✅ Merge PR → Triggers production deployment
+2. ✅ Builds WASM
+3. ✅ Runs Rust lints and tests
+4. ✅ Runs typecheck and Vitest tests
+5. ✅ Builds project with rsbuild
+6. ✅ Creates preview deployment (wrangler CLI)
+7. ✅ Preview URL available in PR checks
+8. ✅ Merge PR → Triggers production deployment
 
 ---
 
