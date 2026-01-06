@@ -50,8 +50,11 @@ fn to_xml_recursive(nodes: &[Node], indent: usize) -> String {
             } else {
                 format_content(&node.content, has_newlines, &sp)
             };
-            format!("{}
-<{}>{}</{}>", sp, node.tag, inner, node.tag)
+            format!(
+                "{}
+<{}>{}</{}>",
+                sp, node.tag, inner, node.tag
+            )
         })
         .collect::<Vec<String>>()
         .join("\n")
@@ -131,8 +134,11 @@ fn to_markdown_recursive(nodes: &[Node], level: usize) -> String {
     let mut out = String::new();
     for node in nodes {
         let header = "#".repeat(level);
-        out.push_str(&format!("{} {}
-", header, node.tag));
+        out.push_str(&format!(
+            "{} {}
+",
+            header, node.tag
+        ));
 
         if !node.content.is_empty() {
             out.push_str(&format!("{}\n\n", node.content));
@@ -297,7 +303,7 @@ mod tests {
                 tag: "NESTED".to_string(),
                 content: "".to_string(),
                 is_list: None,
-                children: Some(vec![mock_node("ITEM", "Value")])
+                children: Some(vec![mock_node("ITEM", "Value")]),
             },
         ];
         let result = to_xml_recursive(&nodes, 0);
@@ -339,7 +345,7 @@ mod tests {
             tag: "LIST".to_string(),
             content: "".to_string(),
             is_list: None,
-            children: Some(vec![mock_node("ITEM", "A"), mock_node("ITEM", "B")])
+            children: Some(vec![mock_node("ITEM", "A"), mock_node("ITEM", "B")]),
         }];
         let result = to_toon_recursive(&nodes, 0);
         assert_eq!(result, "LIST[2]: A,B\n");
@@ -352,14 +358,14 @@ mod tests {
             tag: "ROW".to_string(),
             content: "".to_string(),
             is_list: None,
-            children: Some(vec![mock_node("COL1", "V1"), mock_node("COL2", "V2")])
+            children: Some(vec![mock_node("COL1", "V1"), mock_node("COL2", "V2")]),
         };
         let nodes = vec![Node {
             id: "p1".to_string(),
             tag: "TABLE".to_string(),
             content: "".to_string(),
             is_list: None,
-            children: Some(vec![child1])
+            children: Some(vec![child1]),
         }];
         let result = to_toon_recursive(&nodes, 0);
         assert!(result.contains("TABLE[1]{COL1,COL2}:"));
