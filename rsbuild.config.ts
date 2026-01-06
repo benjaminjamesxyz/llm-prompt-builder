@@ -33,7 +33,7 @@ export default defineConfig({
       config.optimization = {
         ...config.optimization,
         splitChunks: {
-          chunks: 'async',
+          chunks: 'all',
           cacheGroups: {
             'prism-core': {
               test: /[\\/]node_modules[\\/]prismjs[\\/]/,
@@ -43,7 +43,7 @@ export default defineConfig({
             },
             'common': {
               name: 'common',
-              chunks: 'async',
+              chunks: 'all',
               minChunks: 2,
               priority: 5,
               reuseExistingChunk: true,
