@@ -120,22 +120,35 @@ The workflow runs on:
    - Runs `bun install`
    - Installs all dependencies from `package.json`
 
-4. **TypeScript Typecheck**
+4. **Build WASM**
+   - Runs `bun run build:wasm`
+   - Compiles Rust code to WebAssembly
+   - Essential for all prompt generation features
+
+5. **Lint Rust**
+   - Runs `cargo clippy` and `cargo fmt`
+   - Ensures Rust code quality and formatting
+
+6. **Test Rust**
+   - Runs `bun run test:wasm`
+   - Validates WASM logic
+
+7. **TypeScript Typecheck**
    - Runs `bun run typecheck`
    - **Blocking step** - fails workflow if type errors exist
    - Enforces strict TypeScript compliance
 
-5. **Run Vitest Tests**
+8. **Run Vitest Tests**
    - Runs `bun run test:ci`
    - **Blocking step** - fails workflow if tests fail
-   - Ensures code quality
+   - Ensures frontend code quality
 
-6. **Build Project**
+9. **Build Project**
    - Runs `bun run build`
    - Compiles Preact/TypeScript code
    - Outputs to `dist/` directory
 
-7. **Deploy to Cloudflare Pages**
+10. **Deploy to Cloudflare Pages**
    - Uses Wrangler CLI
    - Deploys `dist/` directory
    - Creates preview for PRs, production for master
@@ -181,6 +194,9 @@ Deploy directly from your local machine:
 ```bash
 # Ensure dependencies are installed
 bun install
+
+# Build WASM module
+bun run build:wasm
 
 # Build the project
 bun run build

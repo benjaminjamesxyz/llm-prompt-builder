@@ -105,6 +105,20 @@ bun run test
 bun run test:ci
 ```
 
+### Run Rust/WASM Tests
+
+```bash
+# Run Rust unit tests for the WASM module
+bun run test:wasm
+```
+
+### Run Linting
+
+```bash
+# Run full project linting (TypeScript + Rust)
+bun run lint
+```
+
 ### Run Tests with Coverage
 
 ```bash
@@ -506,11 +520,14 @@ git checkout -b feature/your-feature-name
 ### Before Committing
 
 ```bash
-# Run type checking
-bun typecheck
+# Run linting (TypeScript + Rust)
+bun run lint
 
-# Run tests
+# Run frontend tests
 bun test:ci
+
+# Run WASM tests
+bun test:wasm
 
 # Build to ensure no build errors
 bun run build
@@ -520,8 +537,8 @@ bun run build
 
 All Pull Requests must have:
 
-- ✅ **Typecheck passed** - No TypeScript errors
-- ✅ **Tests passed** - All tests passing
+- ✅ **Linting passed** - No TypeScript or Rust errors
+- ✅ **Tests passed** - All frontend and WASM tests passing
 - ✅ **Build succeeded** - No build errors
 
 ### Manual Testing Checklist

@@ -107,17 +107,23 @@ bun run deploy
 Run tests locally before pushing:
 
 ```bash
-# Run all tests in watch mode
+# Run frontend tests in watch mode
 bun run test
 
-# Run tests once (CI mode)
+# Run frontend tests once (CI mode)
 bun run test:ci
+
+# Run Rust/WASM unit tests
+bun run test:wasm
 
 # Run tests with coverage report
 bun run test:coverage
+
+# Run full project linting (TypeScript + Rust)
+bun run lint
 ```
 
-All tests must pass before deployment.
+All tests and lint checks must pass before deployment.
 
 ## Adding Examples and Templates
 
